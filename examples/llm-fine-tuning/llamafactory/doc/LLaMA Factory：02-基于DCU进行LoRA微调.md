@@ -48,8 +48,8 @@ conda activate dcu_llm_fine
 关于本项目DCU显卡所需的特殊深度学习库可从[光合](https://developer.hpccube.com/tool/)开发者社区下载安装。
 
 ```shell
+DCU: K100-AI
 DTK: 25.04
-
 python: 3.10
 
 #  torch: 2.4.1 / 2.4.1+das.opt2.dtk2504
@@ -61,7 +61,7 @@ wget --content-disposition 'https://download.sourcefind.cn:65024/file/4/lmslim/D
 # flash-attn：2.6.1+das.opt4.dtk2504
 wget --content-disposition 'https://download.sourcefind.cn:65024/file/4/flash_attn/DAS1.5/flash_attn-2.6.1+das.opt4.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl'
 
-# vllm: ≥0.4.3 / 
+# vllm: ≥0.4.3 / 0.6.2+das.opt3.dtk2504
 wget --content-disposition 'https://download.sourcefind.cn:65024/file/4/vllm/DAS1.5/vllm-0.6.2+das.opt3.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl'
 
 #deepspeed: 0.14.2+das.opt2.dtk2504
@@ -85,7 +85,7 @@ pip install -e ".[torch,metrics]"
 ## llama4 需要单独安装以下包
 ##pip install git+https://github.com/hiyouga/transformers.git@llama4_train
 
-# （可选）deepspeed多机训练
+# deepspeed多机训练（可选）
 # pdsh安装，若已安装，可忽略。
 # pdsh 工具的主要作用是在多个远程主机上并行执行命令。它是一个高效的并行远程 shell 工具，对于需要同时管理和操作大量服务器的系统管理员和集群用户来说非常有用。
 # 安装需要root权限
@@ -218,6 +218,8 @@ llamafactory-cli chat examples/inference/llama3_lora_sft.yaml
 llamafactory-cli export examples/merge_lora/llama3_lora_sft.yaml
 ```
 
+
+
 高级用法请参考 [examples/README_zh.md]()（包括多 GPU 微调）。
 
 > [!TIP]
@@ -226,10 +228,92 @@ llamafactory-cli export examples/merge_lora/llama3_lora_sft.yaml
 >
 > 自有数据集推理精度验证方法推荐使用：`python scripts/vllm_infer.py`生成结果，`python scripts/eval_bleu_rouge.py`计算得分，具体参数信息请参考脚本内容。
 
+
+## 常见问题
+### 微调启动异常``
+
+> **环境信息：**
+> 模型：Llama3-8B-Instruct 
+> 
+> 系统：ubuntu22.04
+> 
+> DCU: K100-AI
+> 
+> DTK： 25.04
+
+```bash
+llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
+[2025-05-26 17:16:14,744] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+INFO: Please install lmslim if you want to infer gptq or awq  or w8a8 model.
+
+Traceback (most recent call last):
+  File "/root/anaconda3/envs/dcu_llm_fine/lib/python3.10/site-packages/torch/cuda/__init__.py", line 642, in _raw_device_count_amdsmi
+    amdsmi.amdsmi_init()
+NameError: name 'amdsmi' is not defined
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/root/anaconda3/envs/dcu_llm_fine/bin/llamafactory-cli", line 8, in <module>
+    sys.exit(main())
+  File "/root/AI-BOX/code/dcu/llama-factory/src/llamafactory/cli.py", line 40, in main
+    from .api.app import run_api
+  File "/root/AI-BOX/code/dcu/llama-factory/src/llamafactory/api/app.py", line 21, in <module>
+    from ..chat import ChatModel
+  File "/root/AI-BOX/code/dcu/llama-factory/src/llamafactory/chat/__init__.py", line 16, in <module>
+    from .chat_model import ChatModel
+  File "/root/AI-BOX/code/dcu/llama-factory/src/llamafactory/chat/chat_model.py", line 29, in <module>
+    from .vllm_engine import VllmEngine
+  File "/root/AI-BOX/code/dcu/llama-factory/src/llamafactory/chat/vllm_engine.py", line 33, in <module>
+    from vllm import AsyncEngineArgs, AsyncLLMEngine, RequestOutput, SamplingParams
+  File "/root/anaconda3/envs/dcu_llm_fine/lib/python3.10/site-packages/vllm/__init__.py", line 4, in <module>
+    from vllm.engine.async_llm_engine import AsyncLLMEngine
+  File "/root/anaconda3/envs/dcu_llm_fine/lib/python3.10/site-packages/vllm/engine/async_llm_engine.py", line 15, in <module>
+    from vllm.engine.llm_engine import LLMEngine, SchedulerOutputState
+  File "/root/anaconda3/envs/dcu_llm_fine/lib/python3.10/site-packages/vllm/engine/llm_engine.py", line 25, in <module>
+    from vllm.engine.output_processor.interfaces import (
+  File "/root/anaconda3/envs/dcu_llm_fine/lib/python3.10/site-packages/vllm/engine/output_processor/interfaces.py", line 8, in <module>
+    from vllm.transformers_utils.detokenizer import Detokenizer
+  File "/root/anaconda3/envs/dcu_llm_fine/lib/python3.10/site-packages/vllm/transformers_utils/detokenizer.py", line 7, in <module>
+    from .tokenizer_group import BaseTokenizerGroup
+  File "/root/anaconda3/envs/dcu_llm_fine/lib/python3.10/site-packages/vllm/transformers_utils/tokenizer_group/__init__.py", line 5, in <module>
+    from vllm.executor.ray_utils import ray
+  File "/root/anaconda3/envs/dcu_llm_fine/lib/python3.10/site-packages/vllm/executor/ray_utils.py", line 14, in <module>
+    from vllm.worker.worker_base import WorkerWrapperBase
+  File "/root/anaconda3/envs/dcu_llm_fine/lib/python3.10/site-packages/vllm/worker/worker_base.py", line 19, in <module>
+    from vllm.worker.cache_engine import CacheEngine
+  File "/root/anaconda3/envs/dcu_llm_fine/lib/python3.10/site-packages/vllm/worker/cache_engine.py", line 11, in <module>
+    from vllm.attention.backends.tree_decoding_utils import move_cache
+  File "/root/anaconda3/envs/dcu_llm_fine/lib/python3.10/site-packages/vllm/attention/backends/tree_decoding_utils.py", line 4, in <module>
+    from vllm.attention.backends.blocksparse_attn import BlocksparseFlashAttentionImpl
+  File "/root/anaconda3/envs/dcu_llm_fine/lib/python3.10/site-packages/vllm/attention/backends/blocksparse_attn.py", line 10, in <module>
+    from vllm.attention.ops.blocksparse_attention.interface import (
+  File "/root/anaconda3/envs/dcu_llm_fine/lib/python3.10/site-packages/vllm/attention/ops/blocksparse_attention/interface.py", line 11, in <module>
+    IS_COMPUTE_8_OR_ABOVE = current_platform.has_device_capability(80)
+  File "/root/anaconda3/envs/dcu_llm_fine/lib/python3.10/site-packages/vllm/platforms/interface.py", line 73, in has_device_capability
+    current_capability = cls.get_device_capability(device_id=device_id)
+  File "/root/anaconda3/envs/dcu_llm_fine/lib/python3.10/site-packages/vllm/platforms/rocm.py", line 25, in get_device_capability
+    major, minor = torch.cuda.get_device_capability(device_id)
+  File "/root/anaconda3/envs/dcu_llm_fine/lib/python3.10/site-packages/torch/cuda/__init__.py", line 451, in get_device_capability
+    prop = get_device_properties(device)
+  File "/root/anaconda3/envs/dcu_llm_fine/lib/python3.10/site-packages/torch/cuda/__init__.py", line 467, in get_device_properties
+    if device < 0 or device >= device_count():
+  File "/root/anaconda3/envs/dcu_llm_fine/lib/python3.10/site-packages/torch/cuda/__init__.py", line 845, in device_count
+    nvml_count = _device_count_amdsmi() if torch.version.hip else _device_count_nvml()
+  File "/root/anaconda3/envs/dcu_llm_fine/lib/python3.10/site-packages/torch/cuda/__init__.py", line 767, in _device_count_amdsmi
+    raw_cnt = _raw_device_count_amdsmi()
+  File "/root/anaconda3/envs/dcu_llm_fine/lib/python3.10/site-packages/torch/cuda/__init__.py", line 643, in _raw_device_count_amdsmi
+    except amdsmi.AmdSmiException as e:
+NameError: name 'amdsmi' is not defined
+```
+
 ## 参考资料
 
 - [README_zh]()
 - [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory)
 
+
 # 附录
+
+
 
