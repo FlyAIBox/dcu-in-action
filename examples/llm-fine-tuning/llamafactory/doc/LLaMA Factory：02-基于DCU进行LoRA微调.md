@@ -903,6 +903,16 @@ I0527 15:22:17.917193 58624 ProcessGroupNCCL.cpp:1172] [PG 0 (default_pg) Rank 0
 
 ### 模型微调后推理测试
 
+配置文件
+```bash
+model_name_or_path: /root/.cache/modelscope/hub/models/LLM-Research/Meta-Llama-3-8B-Instruct
+adapter_name_or_path: saves/llama3-8b/lora/sft
+template: llama3
+infer_backend: huggingface  # choices: [huggingface, vllm, sglang]
+trust_remote_code: true
+```
+
+输出结果
 ```bash
 (dcu_llm_fine) root@Ubuntu2204:~/AI-BOX/code/dcu/llama-factory# llamafactory-cli chat examples/inference/llama3_lora_sft.yaml
 [2025-05-27 17:30:16,582] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
@@ -1062,8 +1072,147 @@ Assistant: 1. 细胞理论：细胞理论是指细胞是生命的基本结构单
 2. 日心说：日心说是指地球绕太阳旋转的理论。这种理论认为，地球绕太阳旋转，而不是太阳绕地球旋转。这是由古希腊哲学家阿基米德和托勒密提出的一种理论，并且是宇宙学的基础理论之一。日心说理论的提出改变了人们对宇宙的看法，并且对科学的发展产生了很大的影响。
 
 ```
+### 导出模型
 
+配置文件
+```bash
+### Note: DO NOT use quantized model or quantization_bit when merging lora adapters
 
+### model
+model_name_or_path: /root/.cache/modelscope/hub/models/LLM-Research/Meta-Llama-3-8B-Instruct
+adapter_name_or_path: saves/llama3-8b/lora/sft
+template: llama3
+trust_remote_code: true
+
+### export
+export_dir: output/llama3_lora_sft
+export_size: 5
+export_device: cpu  # choices: [cpu, auto]
+export_legacy_format: false
+```
+
+输出结果
+```bash
+(dcu_llm_fine) root@Ubuntu2204:~/AI-BOX/code/dcu/llama-factory# llamafactory-cli export examples/merge_lora/llama3_lora_sft.yaml
+[2025-05-27 18:06:54,373] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[INFO|tokenization_utils_base.py:2212] 2025-05-27 18:06:57,865 >> loading file tokenizer.json
+[INFO|tokenization_utils_base.py:2212] 2025-05-27 18:06:57,865 >> loading file tokenizer.model
+[INFO|tokenization_utils_base.py:2212] 2025-05-27 18:06:57,865 >> loading file added_tokens.json
+[INFO|tokenization_utils_base.py:2212] 2025-05-27 18:06:57,865 >> loading file special_tokens_map.json
+[INFO|tokenization_utils_base.py:2212] 2025-05-27 18:06:57,865 >> loading file tokenizer_config.json
+[INFO|tokenization_utils_base.py:2478] 2025-05-27 18:06:58,287 >> Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
+[INFO|configuration_utils.py:670] 2025-05-27 18:06:58,289 >> loading configuration file /root/.cache/modelscope/hub/models/LLM-Research/Meta-Llama-3-8B-Instruct/config.json
+[INFO|configuration_utils.py:739] 2025-05-27 18:06:58,289 >> Model config LlamaConfig {
+  "_name_or_path": "/root/.cache/modelscope/hub/models/LLM-Research/Meta-Llama-3-8B-Instruct",
+  "architectures": [
+    "LlamaForCausalLM"
+  ],
+  "attention_bias": false,
+  "attention_dropout": 0.0,
+  "bos_token_id": 128000,
+  "eos_token_id": 128009,
+  "head_dim": 128,
+  "hidden_act": "silu",
+  "hidden_size": 4096,
+  "initializer_range": 0.02,
+  "intermediate_size": 14336,
+  "max_position_embeddings": 8192,
+  "mlp_bias": false,
+  "model_type": "llama",
+  "num_attention_heads": 32,
+  "num_hidden_layers": 32,
+  "num_key_value_heads": 8,
+  "pretraining_tp": 1,
+  "rms_norm_eps": 1e-05,
+  "rope_scaling": null,
+  "rope_theta": 500000.0,
+  "tie_word_embeddings": false,
+  "torch_dtype": "bfloat16",
+  "transformers_version": "4.45.0",
+  "use_cache": true,
+  "vocab_size": 128256
+}
+
+[INFO|tokenization_utils_base.py:2212] 2025-05-27 18:06:58,290 >> loading file tokenizer.json
+[INFO|tokenization_utils_base.py:2212] 2025-05-27 18:06:58,290 >> loading file tokenizer.model
+[INFO|tokenization_utils_base.py:2212] 2025-05-27 18:06:58,290 >> loading file added_tokens.json
+[INFO|tokenization_utils_base.py:2212] 2025-05-27 18:06:58,291 >> loading file special_tokens_map.json
+[INFO|tokenization_utils_base.py:2212] 2025-05-27 18:06:58,291 >> loading file tokenizer_config.json
+[INFO|tokenization_utils_base.py:2478] 2025-05-27 18:06:58,706 >> Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
+[INFO|2025-05-27 18:06:58] llamafactory.data.template:143 >> Add pad token: <|eot_id|>
+[INFO|2025-05-27 18:06:58] llamafactory.data.template:143 >> Add <|eot_id|>,<|eom_id|> to stop words.
+[WARNING|2025-05-27 18:06:58] llamafactory.data.template:148 >> New tokens have been added, make sure `resize_vocab` is True.
+[INFO|configuration_utils.py:670] 2025-05-27 18:06:58,726 >> loading configuration file /root/.cache/modelscope/hub/models/LLM-Research/Meta-Llama-3-8B-Instruct/config.json
+[INFO|configuration_utils.py:739] 2025-05-27 18:06:58,727 >> Model config LlamaConfig {
+  "_name_or_path": "/root/.cache/modelscope/hub/models/LLM-Research/Meta-Llama-3-8B-Instruct",
+  "architectures": [
+    "LlamaForCausalLM"
+  ],
+  "attention_bias": false,
+  "attention_dropout": 0.0,
+  "bos_token_id": 128000,
+  "eos_token_id": 128009,
+  "head_dim": 128,
+  "hidden_act": "silu",
+  "hidden_size": 4096,
+  "initializer_range": 0.02,
+  "intermediate_size": 14336,
+  "max_position_embeddings": 8192,
+  "mlp_bias": false,
+  "model_type": "llama",
+  "num_attention_heads": 32,
+  "num_hidden_layers": 32,
+  "num_key_value_heads": 8,
+  "pretraining_tp": 1,
+  "rms_norm_eps": 1e-05,
+  "rope_scaling": null,
+  "rope_theta": 500000.0,
+  "tie_word_embeddings": false,
+  "torch_dtype": "bfloat16",
+  "transformers_version": "4.45.0",
+  "use_cache": true,
+  "vocab_size": 128256
+}
+
+[INFO|2025-05-27 18:06:58] llamafactory.model.model_utils.kv_cache:143 >> KV cache is enabled for faster generation.
+[INFO|modeling_utils.py:3723] 2025-05-27 18:06:58,761 >> loading weights file /root/.cache/modelscope/hub/models/LLM-Research/Meta-Llama-3-8B-Instruct/model.safetensors.index.json
+[INFO|modeling_utils.py:1622] 2025-05-27 18:06:58,761 >> Instantiating LlamaForCausalLM model under default dtype torch.bfloat16.
+[WARNING|logging.py:328] 2025-05-27 18:06:58,762 >> Using the `SDPA` attention implementation on multi-gpu setup with ROCM may lead to performance issues due to the FA backend. Disabling it to use alternative backends.
+[INFO|configuration_utils.py:1099] 2025-05-27 18:06:58,763 >> Generate config GenerationConfig {
+  "bos_token_id": 128000,
+  "eos_token_id": 128009
+}
+
+Loading checkpoint shards: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:00<00:00,  4.07it/s]
+[INFO|modeling_utils.py:4568] 2025-05-27 18:06:59,832 >> All model checkpoint weights were used when initializing LlamaForCausalLM.
+
+[INFO|modeling_utils.py:4576] 2025-05-27 18:06:59,832 >> All the weights of LlamaForCausalLM were initialized from the model checkpoint at /root/.cache/modelscope/hub/models/LLM-Research/Meta-Llama-3-8B-Instruct.
+If your task is similar to the task the model of the checkpoint was trained on, you can already use LlamaForCausalLM for predictions without further training.
+[INFO|configuration_utils.py:1052] 2025-05-27 18:06:59,835 >> loading configuration file /root/.cache/modelscope/hub/models/LLM-Research/Meta-Llama-3-8B-Instruct/generation_config.json
+[INFO|configuration_utils.py:1099] 2025-05-27 18:06:59,835 >> Generate config GenerationConfig {
+  "bos_token_id": 128000,
+  "do_sample": true,
+  "eos_token_id": [
+    128001,
+    128009
+  ],
+  "max_length": 4096,
+  "temperature": 0.6,
+  "top_p": 0.9
+}
+
+[INFO|2025-05-27 18:06:59] llamafactory.model.model_utils.attention:143 >> Using torch SDPA for faster training and inference.
+[INFO|2025-05-27 18:07:47] llamafactory.model.adapter:143 >> Merged 1 adapter(s).
+[INFO|2025-05-27 18:07:47] llamafactory.model.adapter:143 >> Loaded adapter(s): saves/llama3-8b/lora/sft
+[INFO|2025-05-27 18:07:47] llamafactory.model.loader:143 >> all params: 8,030,261,248
+[INFO|2025-05-27 18:07:47] llamafactory.train.tuner:143 >> Convert model dtype to: torch.bfloat16.
+[INFO|configuration_utils.py:407] 2025-05-27 18:07:47,243 >> Configuration saved in output/llama3_lora_sft/config.json
+[INFO|configuration_utils.py:868] 2025-05-27 18:07:47,244 >> Configuration saved in output/llama3_lora_sft/generation_config.json
+[INFO|modeling_utils.py:2838] 2025-05-27 18:08:22,648 >> The model is bigger than the maximum size per checkpoint (5GB) and is going to be split in 4 checkpoint shards. You can find where each parameters has been saved in the index located at output/llama3_lora_sft/model.safetensors.index.json.
+[INFO|tokenization_utils_base.py:2649] 2025-05-27 18:08:22,651 >> tokenizer config file saved in output/llama3_lora_sft/tokenizer_config.json
+[INFO|tokenization_utils_base.py:2658] 2025-05-27 18:08:22,652 >> Special tokens file saved in output/llama3_lora_sft/special_tokens_map.json
+[INFO|2025-05-27 18:08:22] llamafactory.train.tuner:143 >> Ollama modelfile saved in output/llama3_lora_sft/Modelfile
+```
 
 ## 常见问题
 
