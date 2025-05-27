@@ -1033,7 +1033,34 @@ Assistant: 我是 {{name}}，由 {{author}} 训练的 AI 助手。我旨在为�
 User: 你有名字吗
 Assistant: 是的，我是 {{name}}，由 {{author}} 训练的 AI 助手。
 
-User: 
+User: Describe a process of making crepes.
+Assistant: Making crepes is a simple process that requires a few ingredients and some basic cooking skills. Here's a step-by-step guide to making delicious crepes:
+
+Ingredients:
+1. 1 cup all-purpose flour
+2. 2 eggs
+3. 1/2 cup milk
+4. 1/2 cup water
+5. 1/4 teaspoon salt
+6. 2 tablespoons butter, melted
+7. Filling of your choice (e.g. jam, cheese, fruit, etc.)
+
+Instructions:
+1. In a large mixing bowl, combine the flour, eggs, milk, water, and salt. Whisk until the batter is smooth and free of lumps.
+2. Add the melted butter to the batter and whisk until well combined.
+3. Heat a non-stick pan or a crepe pan over medium heat.
+4. Pour about 1/4 cup of the batter into the pan and tilt the pan to evenly coat the bottom with the batter.
+5. Cook the crepe for about 2 minutes, until the edges start to curl and the surface is dry.
+6. Loosen the crepe with a spatula and flip it over.
+7. Cook the other side of the crepe for about 30 seconds, until it's lightly browned.
+8. Repeat the process until all the batter is used up.
+9. Fill the crepes with your desired filling and serve hot.
+
+User: 识别并解释给定列表中的两个科学理论：细胞理论和日心说。
+Assistant: 1. 细胞理论：细胞理论是指细胞是生命的基本结构单元的理论。这种理论认为，细胞是由细胞膜、细胞质和核三部分组成的，可以进行自我复制和分裂，从而繁殖新的生命体。细胞理论的提出是由17世纪的英国学者李比希提出的，并且是生物学的基础理论之一。
+
+2. 日心说：日心说是指地球绕太阳旋转的理论。这种理论认为，地球绕太阳旋转，而不是太阳绕地球旋转。这是由古希腊哲学家阿基米德和托勒密提出的一种理论，并且是宇宙学的基础理论之一。日心说理论的提出改变了人们对宇宙的看法，并且对科学的发展产生了很大的影响。
+
 ```
 
 
