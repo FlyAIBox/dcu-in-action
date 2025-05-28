@@ -1,0 +1,291 @@
+version: '3.8'
+
+services:
+  # DCU开发环境主服务
+  dcu-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dcu-in-action:latest
+    container_name: dcu-dev-main
+    hostname: dcu-dev
+    restart: unless-stopped
+    
+    # DCU设备映射
+    devices:
+      - /dev/dri:/dev/dri
+      - /dev/kfd:/dev/kfd
+    
+    # 端口映射
+    ports:
+      - "8888:8888"   # Jupyter Lab
+      - "8000:8000"   # FastAPI推理服务
+      - "7860:7860"   # Gradio界面
+      - "6006:6006"   # TensorBoard
+    
+    # 卷挂载
+    volumes:
+      - ./:/workspace/dcu-in-action:rw
+      - dcu-models:/workspace/models
+      - dcu-datasets:/workspace/datasets
+      - dcu-outputs:/workspace/outputs
+      - dcu-cache:/home/dcu/.cache
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    
+    # 环境变量
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - NVIDIA_VISIBLE_DEVICES=all
+      - HIP_VISIBLE_DEVICES=0,1,2,3
+      - CUDA_VISIBLE_DEVICES=0,1,2,3
+      - PYTHONPATH=/workspace/dcu-in-action
+      - TOKENIZERS_PARALLELISM=false
+      - HF_HOME=/home/dcu/.cache/huggingface
+      - START_JUPYTER=false
+      - START_MONITOR=false
+      - RUN_ENV_CHECK=true
+    
+    # 运行时配置
+    runtime: "runc"
+    
+    # 用户权限
+    user: "1000:1000"
+    
+    # 工作目录
+    working_dir: /workspace/dcu-in-action
+    
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "python", "-c", "import torch; exit(0 if torch.cuda.is_available() else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          memory: 32G
+        reservations:
+          memory: 16G
+    
+    # 安全配置
+    security_opt:
+      - seccomp:unconfined
+    
+    # 默认命令
+    command: ["interactive"]
+
+  # Jupyter Lab专用服务
+  dcu-jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dcu-in-action:latest
+    container_name: dcu-jupyter
+    hostname: dcu-jupyter
+    restart: unless-stopped
+    profiles:
+      - jupyter
+    
+    devices:
+      - /dev/dri:/dev/dri
+      - /dev/kfd:/dev/kfd
+    
+    ports:
+      - "8889:8888"
+    
+    volumes:
+      - ./:/workspace/dcu-in-action:rw
+      - dcu-models:/workspace/models
+      - dcu-datasets:/workspace/datasets
+      - dcu-outputs:/workspace/outputs
+      - dcu-cache:/home/dcu/.cache
+    
+    environment:
+      - PYTHONPATH=/workspace/dcu-in-action
+      - HIP_VISIBLE_DEVICES=0
+      - HF_HOME=/home/dcu/.cache/huggingface
+    
+    user: "1000:1000"
+    working_dir: /workspace/dcu-in-action
+    command: ["jupyter"]
+
+  # 推理服务专用
+  dcu-inference:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dcu-in-action:latest
+    container_name: dcu-inference
+    hostname: dcu-inference
+    restart: unless-stopped
+    profiles:
+      - inference
+    
+    devices:
+      - /dev/dri:/dev/dri
+      - /dev/kfd:/dev/kfd
+    
+    ports:
+      - "8001:8000"
+    
+    volumes:
+      - ./:/workspace/dcu-in-action:rw
+      - dcu-models:/workspace/models
+      - dcu-cache:/home/dcu/.cache
+    
+    environment:
+      - PYTHONPATH=/workspace/dcu-in-action
+      - HIP_VISIBLE_DEVICES=0,1
+      - HF_HOME=/home/dcu/.cache/huggingface
+      - MODEL_NAME=Qwen/Qwen-7B-Chat
+    
+    user: "1000:1000"
+    working_dir: /workspace/dcu-in-action
+    command: ["inference", "Qwen/Qwen-7B-Chat"]
+
+  # 训练服务专用
+  dcu-training:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dcu-in-action:latest
+    container_name: dcu-training
+    hostname: dcu-training
+    restart: "no"
+    profiles:
+      - training
+    
+    devices:
+      - /dev/dri:/dev/dri
+      - /dev/kfd:/dev/kfd
+    
+    volumes:
+      - ./:/workspace/dcu-in-action:rw
+      - dcu-models:/workspace/models
+      - dcu-datasets:/workspace/datasets
+      - dcu-outputs:/workspace/outputs
+      - dcu-cache:/home/dcu/.cache
+    
+    environment:
+      - PYTHONPATH=/workspace/dcu-in-action
+      - HIP_VISIBLE_DEVICES=0,1,2,3
+      - HF_HOME=/home/dcu/.cache/huggingface
+      - WANDB_PROJECT=dcu-training
+    
+    user: "1000:1000"
+    working_dir: /workspace/dcu-in-action
+    command: ["bash"]
+
+  # 监控服务
+  dcu-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dcu-in-action:latest
+    container_name: dcu-monitor
+    hostname: dcu-monitor
+    restart: unless-stopped
+    profiles:
+      - monitor
+    
+    devices:
+      - /dev/dri:/dev/dri
+      - /dev/kfd:/dev/kfd
+    
+    ports:
+      - "9090:9090"   # 监控面板
+    
+    volumes:
+      - ./:/workspace/dcu-in-action:rw
+      - dcu-cache:/home/dcu/.cache
+    
+    environment:
+      - PYTHONPATH=/workspace/dcu-in-action
+      - HIP_VISIBLE_DEVICES=0,1,2,3
+    
+    user: "1000:1000"
+    working_dir: /workspace/dcu-in-action
+    command: ["monitor"]
+
+  # MinIO对象存储服务（用于存储模型和数据）
+  minio:
+    image: minio/minio:latest
+    container_name: dcu-minio
+    hostname: minio
+    restart: unless-stopped
+    profiles:
+      - storage
+    
+    ports:
+      - "9000:9000"   # MinIO API
+      - "9001:9001"   # MinIO Console
+    
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin123
+    
+    volumes:
+      - minio-data:/data
+    
+    command: server /data --console-address ":9001"
+
+  # Redis缓存服务
+  redis:
+    image: redis:7-alpine
+    container_name: dcu-redis
+    hostname: redis
+    restart: unless-stopped
+    profiles:
+      - cache
+    
+    ports:
+      - "6379:6379"
+    
+    volumes:
+      - redis-data:/data
+    
+    command: redis-server --appendonly yes
+
+# 数据卷定义
+volumes:
+  dcu-models:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/models
+  
+  dcu-datasets:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/datasets
+  
+  dcu-outputs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/outputs
+  
+  dcu-cache:
+    driver: local
+  
+  minio-data:
+    driver: local
+  
+  redis-data:
+    driver: local
+
+# 网络配置
+networks:
+  default:
+    name: dcu-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16 
