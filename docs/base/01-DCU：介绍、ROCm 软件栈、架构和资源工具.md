@@ -6,7 +6,7 @@
 
 ### ROCm 核心特性与架构 🛠️
 
-![ROCm组件结构](docs/img/ROCm组件结构.png)
+![ROCm组件结构](/docs/img/ROCm组件结构.png)
 
 - 分层构建: ROCm 采用自底向上的模块化设计，主要组件包括：
   - **底层驱动**: 加速器驱动 **ROCk**。
@@ -68,16 +68,27 @@ ROCm 提供了丰富的数学库和工具，以支持高效开发、调试和优
 
 总而言之，ROCm 为 DCU 提供了一个功能完整、开源的软件生态环境，旨在对标并提供 CUDA 的替代方案，尤其强调其可移植性和开放性。
 
+## DCU软硬件平台架构
+![ROCm组件结构](/docs/img/DCU计算平台软硬件架构.png)
+
+## DCU资源工具
+
+| **名称**                     | **下载地址**                                   |
+| ---------------------------- | ---------------------------------------------- |
+| 驱动                         | `https://download.sourcefind.cn:65024/6/main`  |
+| DTK(DCU Toolkit)             | `https://download.sourcefind.cn:65024/1/main`  |
+| DAS（DCU AI Software Stack） | `https://download.sourcefind.cn:65024/4/main/` |
+| 科学计算                     | `https://download.sourcefind.cn:65024/9/main`  |
+| 光源（镜像、模型仓库）       | `https://sourcefind.cn/`                       |
+| 工具包                       | `https://download.sourcefind.cn:65024/5/main`  |
+| 隐私计算                     | `https://download.sourcefind.cn:65024/8/main`  |
+| DCU编程实训 代码             | `https://download.sourcefind.cn:65024/7/main`  |
+
+
+
 ## 参考资料
-
 1. [DCU环境简介](https://developer.sourcefind.cn/gitbook//dcu_developer/OperationManual/1_ROCmIntro/ROCmIntro.html)
-
-DCU加速卡及其驱动安装
-1、硬件安装请参考：https://developer.sourcefind.cn/gitbook//dcu_tutorial/index.html
-
-2、驱动安装请参考：https://developer.sourcefind.cn/gitbook//dcu_tutorial/index.html
-
-物理机安装DTK
-DTK安装前需要获取DTK的安装包及其部署文档，相关下载地址为：https://cancon.hpccube.com:65024/1/main/
-
-DTK安装步骤可以根据部署文档安装，也可参考：https://developer.sourcefind.cn/gitbook//dcu_tutorial/index.html
+2. [DCU硬件安装参考](https://developer.sourcefind.cn/gitbook//dcu_tutorial/index.html)
+3. [DCU驱动安装参考](https://developer.sourcefind.cn/gitbook//dcu_tutorial/index.html)
+4. [DTK安装包及部署文档下载](https://cancon.hpccube.com:65024/1/main/)
+5. [DTK安装步骤参考教程](https://developer.sourcefind.cn/gitbook//dcu_tutorial/index.html)

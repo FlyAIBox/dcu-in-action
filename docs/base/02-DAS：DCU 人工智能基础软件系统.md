@@ -4,7 +4,7 @@
 
 **DAS (DCU AI Software Stack)** 是一套专为国产加速卡打造的完整人工智能基础软件系统。它旨在全面支持从模型训练到推理落地的人工智能全领域应用，包括各类大模型（自然语言、多模态、MoE、视觉）及通用模型等，助力实现 AI 应用在国产加速卡上的快速迁移、开发与迭代。DAS 与国产加速卡硬件、DTK 开发工具栈、模型库 (Model Zoo) 及镜像仓库等共同构成了完善的国产 AI 软硬件生态。
 
-![DAS架构.png](https://das.sourcefind.cn:55011/portal/api-admin/auth/MyFile?FileKey=/markdown/DAS架构.png_1743042219387.png)
+![DAS架构.png](/docs/img/DCU计算平台软硬件架构.png)
 
 ------
 
@@ -114,3 +114,5 @@ DAS产品中框架/组件的软件包标识包含以下几个部分：
 ## 参考
 
 1. [DAS介绍](https://das.sourcefind.cn:55011/portal/#/docs/DAS%E4%BB%8B%E7%BB%8D)
+2. [DAS代码仓库](https://developer.sourcefind.cn/codes/OpenDAS)
+3. [镜像仓库](https://sourcefind.cn/#/model-zoo/list)
