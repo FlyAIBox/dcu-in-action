@@ -46,12 +46,12 @@ DCU-in-Action 是一个面向生产环境的海光DCU加速卡完整解决方案
 ```mermaid
 graph TB
     subgraph "硬件层"
-        A[海光DCU Z100/K100]
+        A[海光DCU BW1000/K100-AI/K100/Z100L/Z100]
     end
     
     subgraph "运行时层"
         B[DTK 25.04+]
-        C[ROCm 6.0+]
+        C[ROCK 6.3.8+]
     end
     
     subgraph "框架层"
