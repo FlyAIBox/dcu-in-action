@@ -1,0 +1,71 @@
+# 客服场景微调配置 - ChatGLM3-6B + LoRA
+# 适用于智能客服、售后支持等场景
+
+# 基础模型配置
+model_name_or_path: "THUDM/chatglm3-6b"
+template: "chatglm3"
+dataset: "customer_service"
+
+# 微调方式
+finetuning_type: "lora"
+stage: "sft"
+do_train: true
+
+# LoRA配置 - 针对客服场景优化
+lora_rank: 32                    # 适中的rank，平衡性能和效果
+lora_alpha: 64                   # alpha = 2 * rank，标准配置
+lora_dropout: 0.1               # 适度dropout防止过拟合
+lora_target: "query_key_value"  # ChatGLM3的注意力层
+modules_to_save: "embed_tokens,lm_head"  # 保存词嵌入和输出层
+
+# 训练参数
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 4
+learning_rate: 5.0e-5
+num_train_epochs: 3
+max_grad_norm: 1.0
+warmup_ratio: 0.1
+weight_decay: 0.01
+
+# 调度器配置
+lr_scheduler_type: "cosine"
+save_strategy: "steps"
+save_steps: 500
+logging_steps: 10
+
+# 评估配置
+evaluation_strategy: "steps"
+eval_steps: 500
+val_size: 0.1
+load_best_model_at_end: true
+metric_for_best_model: "eval_loss"
+
+# 数据配置
+cutoff_len: 1024               # 客服对话通常较短
+max_samples: 50000             # 客服数据集大小
+train_on_prompt: false         # 只在回答上计算损失
+
+# 量化配置（可选，节省显存）
+quantization_bit: 4
+use_double_quant: true
+quant_type: "nf4"
+
+# 输出配置
+output_dir: "./saves/chatglm3-6b-customer-service"
+overwrite_output_dir: true
+remove_unused_columns: false
+
+# 高级配置
+use_unsloth: true              # 使用Unsloth加速
+use_rslora: false              # 标准LoRA
+plot_loss: true                # 绘制损失曲线
+
+# 日志和监控
+report_to: "tensorboard"       # 可选：wandb, tensorboard, none
+logging_dir: "./logs/customer-service"
+
+# 推理配置
+do_predict: false
+predict_with_generate: true
+generation_max_length: 512
+generation_num_beams: 1 

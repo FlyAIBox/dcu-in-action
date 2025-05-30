@@ -1,0 +1,92 @@
+# 金融问答场景微调配置 - Qwen-14B + LoRA
+# 适用于金融咨询、投资建议、风险评估等场景
+
+# 基础模型配置
+model_name_or_path: "Qwen/Qwen-14B-Chat"
+template: "qwen"
+dataset: "financial_qa"
+
+# 微调方式
+finetuning_type: "lora"
+stage: "sft"
+do_train: true
+
+# LoRA配置 - 针对金融领域优化
+lora_rank: 128                   # 较大的rank适合复杂金融知识
+lora_alpha: 256                  # alpha = 2 * rank
+lora_dropout: 0.05              # 较低dropout保持专业知识连贯性
+lora_target: "c_attn"           # Qwen模型的注意力层
+modules_to_save: "wte,lm_head"  # 保存词嵌入和输出层
+
+# 训练参数
+per_device_train_batch_size: 2   # 14B模型显存占用大
+gradient_accumulation_steps: 8
+learning_rate: 1.0e-5           # 较小学习率，保持金融知识准确性
+num_train_epochs: 5             # 金融数据需要更多训练
+max_grad_norm: 1.0
+warmup_ratio: 0.1
+weight_decay: 0.01
+adam_beta1: 0.9
+adam_beta2: 0.95
+
+# 调度器配置
+lr_scheduler_type: "cosine_with_restarts"
+save_strategy: "epoch"          # 按epoch保存
+logging_steps: 20
+
+# 评估配置
+evaluation_strategy: "epoch"
+val_size: 0.15                  # 较大验证集确保泛化能力
+load_best_model_at_end: true
+metric_for_best_model: "eval_loss"
+greater_is_better: false
+
+# 数据配置
+cutoff_len: 2048               # 金融问答可能较长
+max_samples: 200000            # 大规模金融数据集
+train_on_prompt: false
+mask_history: true             # 屏蔽历史对话
+preprocessing_num_workers: 16
+
+# 输出配置
+output_dir: "./saves/qwen-14b-financial-qa"
+overwrite_output_dir: true
+remove_unused_columns: false
+save_total_limit: 3            # 只保留最近3个checkpoint
+
+# 高级配置
+use_unsloth: false             # 大模型可能不支持
+use_rslora: true               # 提升大模型训练稳定性
+plot_loss: true
+flash_attn: true
+
+# 日志和监控
+report_to: "wandb"
+logging_dir: "./logs/financial-qa"
+run_name: "qwen-14b-financial"
+logging_first_step: true
+
+# 推理配置
+do_predict: true
+predict_with_generate: true
+generation_max_length: 1024
+generation_num_beams: 3        # 使用beam search提高质量
+generation_do_sample: false
+generation_temperature: 0.3    # 较低温度保证准确性
+generation_top_p: 0.8
+generation_repetition_penalty: 1.1
+
+# 早停配置
+early_stopping: true
+early_stopping_patience: 3
+early_stopping_threshold: 0.001
+
+# 内存优化
+gradient_checkpointing: true
+dataloader_pin_memory: true
+dataloader_num_workers: 8
+
+# 特殊配置
+resume_from_checkpoint: null    # 可设置checkpoint路径继续训练
+ignore_data_skip: false
+include_num_input_tokens_seen: true 

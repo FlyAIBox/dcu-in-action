@@ -1,0 +1,84 @@
+# 代码生成场景微调配置 - Code Llama 7B + QLoRA
+# 适用于代码助手、编程辅助等场景
+
+# 基础模型配置
+model_name_or_path: "codellama/CodeLlama-7b-Instruct-hf"
+template: "llama2"
+dataset: "code_alpaca"
+
+# 微调方式
+finetuning_type: "lora"
+stage: "sft"
+do_train: true
+
+# QLoRA配置 - 针对代码生成优化
+lora_rank: 64                    # 较大的rank适合复杂代码任务
+lora_alpha: 16                   # 较小的alpha，防止训练不稳定
+lora_dropout: 0.05              # 较低的dropout，保持代码逻辑连贯性
+lora_target: "q_proj,v_proj,k_proj,o_proj,gate_proj,up_proj,down_proj"
+modules_to_save: "embed_tokens,lm_head"
+
+# 量化配置 - QLoRA设置
+quantization_bit: 4
+use_double_quant: true
+quant_type: "nf4"
+compute_dtype: "bfloat16"
+
+# 训练参数
+per_device_train_batch_size: 1   # 代码序列较长，减小batch size
+gradient_accumulation_steps: 16  # 通过累积梯度增加有效batch size
+learning_rate: 2.0e-5           # 较小的学习率，适合代码生成
+num_train_epochs: 2             # 代码数据通常质量高，少量epoch即可
+max_grad_norm: 1.0
+warmup_ratio: 0.05
+weight_decay: 0.01
+
+# 调度器配置
+lr_scheduler_type: "constant_with_warmup"
+save_strategy: "steps"
+save_steps: 1000
+logging_steps: 10
+
+# 评估配置
+evaluation_strategy: "steps"
+eval_steps: 1000
+val_size: 0.05                  # 代码数据较少，小的验证集
+load_best_model_at_end: true
+metric_for_best_model: "eval_loss"
+
+# 数据配置
+cutoff_len: 4096               # 代码可能较长，增大序列长度
+max_samples: 100000            # 代码数据集大小
+train_on_prompt: false         # 只在代码输出上计算损失
+preprocessing_num_workers: 8
+
+# 输出配置
+output_dir: "./saves/codellama-7b-code-generation"
+overwrite_output_dir: true
+remove_unused_columns: false
+
+# 高级配置
+use_unsloth: true              # 使用Unsloth加速
+use_rslora: true               # 使用RSLoRA提升训练稳定性
+plot_loss: true
+flash_attn: true               # 使用Flash Attention节省显存
+
+# 日志和监控
+report_to: "wandb"             # 使用wandb监控代码生成训练
+logging_dir: "./logs/code-generation"
+run_name: "codellama-7b-code-gen"
+
+# 推理配置
+do_predict: false
+predict_with_generate: true
+generation_max_length: 1024
+generation_num_beams: 1
+generation_do_sample: true
+generation_temperature: 0.1    # 代码生成使用较低温度
+generation_top_p: 0.95
+
+# 特殊配置
+deepspeed: null                # 如需要可启用DeepSpeed
+fp16: false                    # QLoRA使用bfloat16
+bf16: true
+dataloader_pin_memory: false   # 节省内存 

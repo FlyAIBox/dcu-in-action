@@ -1,0 +1,101 @@
+# 数据集配置文件
+# 定义LLaMA Factory支持的数据集格式和信息
+
+# 客服场景数据集
+customer_service:
+  file_name: "customer_service_sample.json"
+  formatting: "alpaca"
+  columns:
+    prompt: "instruction"
+    query: "input"
+    response: "output"
+  tags:
+    role_tag: "role"
+    content_tag: "content"
+    user_tag: "user"
+    assistant_tag: "assistant"
+  system_prompt: "你是一个专业的客服助手，请礼貌、准确地回答客户的问题。"
+
+# 代码生成数据集
+code_generation:
+  file_name: "code_generation_sample.json"
+  formatting: "alpaca"
+  columns:
+    prompt: "instruction"
+    query: "input"
+    response: "output"
+  tags:
+    role_tag: "role"
+    content_tag: "content"
+    user_tag: "user"
+    assistant_tag: "assistant"
+  system_prompt: "你是一个专业的编程助手，请提供高质量、可运行的代码解决方案。"
+
+# 金融问答数据集
+financial_qa:
+  file_name: "financial_qa.json"
+  formatting: "alpaca"
+  columns:
+    prompt: "instruction"
+    query: "input"
+    response: "output"
+  tags:
+    role_tag: "role"
+    content_tag: "content"
+    user_tag: "user"
+    assistant_tag: "assistant"
+  system_prompt: "你是一个专业的金融顾问，请提供准确、负责任的金融建议。"
+
+# 通用alpaca格式
+alpaca_zh:
+  file_name: "alpaca_zh.json"
+  formatting: "alpaca"
+  columns:
+    prompt: "instruction"
+    query: "input"
+    response: "output"
+
+# ShareGPT格式示例
+sharegpt_format:
+  file_name: "sharegpt_data.json"
+  formatting: "sharegpt"
+  columns:
+    messages: "conversations"
+  tags:
+    role_tag: "from"
+    content_tag: "value"
+    user_tag: "human"
+    assistant_tag: "gpt"
+
+# 数据处理配置
+data_processing:
+  # 数据清洗选项
+  cleaning:
+    remove_duplicates: true
+    min_length: 10
+    max_length: 4096
+    filter_empty: true
+    
+  # 数据增强选项  
+  augmentation:
+    enable: false
+    methods:
+      - "synonym_replacement"
+      - "back_translation"
+    ratio: 0.2
+    
+  # 数据分割配置
+  split:
+    train_ratio: 0.8
+    val_ratio: 0.1
+    test_ratio: 0.1
+    random_seed: 42
+
+# 数据质量检查
+quality_checks:
+  min_instruction_length: 5
+  min_output_length: 10
+  max_instruction_length: 1000
+  max_output_length: 4000
+  check_language_consistency: true
+  check_encoding: true 

@@ -21,7 +21,7 @@
 
 - **🚀 大模型训练**：支持LLaMA、ChatGLM、Qwen等主流大模型的从零训练
 - **🎨 模型微调**：提供LoRA、QLoRA、P-Tuning等高效微调方案
-- **⚡ 推理加速**：集成vLLM、TensorRT等推理优化引擎
+- **⚡ 推理加速**：集成vLLM、SGLang、Xinferrence等推理优化引擎
 - **🔬 HPC计算**：科学计算、数值分析、并行计算示例
 - **📊 性能监控**：完整的性能分析和优化工具链
 - **🛠️ 开发工具**：便捷的开发环境配置和调试工具
@@ -48,32 +48,41 @@ graph TB
 
 ```
 dcu-in-action/
-├── docs/                          # 📚 详细文档
-│   ├── 01-dcu-installation.md     # DCU环境安装指南
-│   ├── 02-llm-inference.md        # 大模型推理教程
-│   ├── 03-llm-fine-tuning.md      # 大模型微调教程
-│   ├── 04-llm-training.md         # 大模型训练教程
-│   ├── 05-llm-for-science.md      # 科学计算应用教程
-│   └── dcu/                       # DCU专用文档
-├── examples/                      # 🎯 示例代码
-│   ├── llm-training/              # 大模型训练示例
-│   ├── llm-fine-tuning/           # 大模型微调示例
-│   ├── llm-inference/             # 大模型推理示例
-│   └── llm-for-science/           # 科学计算示例
-├── scripts/                       # 🔧 工具脚本
-│   ├── setup/                     # 环境配置脚本
-│   └── utils/                     # 实用工具脚本
-└── README.md                      # 📖 项目说明
+├── docs/                                    # 📚 详细文档
+│   ├── 01-dcu-installation.md             # DCU环境安装指南
+│   ├── 02-llm-inference.md                # 大模型推理教程
+│   ├── 03-llm-fine-tuning.md              # 大模型微调教程
+│   ├── 04-llm-training.md                 # 大模型训练教程
+│   ├── 05-llm-for-science.md              # 科学计算应用教程
+│   ├── llm-fine-tuning-theory.md          # 📖 大模型微调理论与实践
+│   ├── llamafactory-practical-guide.md    # 📖 LLaMA Factory实战指南
+│   └── dcu/                               # DCU专用文档
+├── examples/                              # 🎯 示例代码
+│   ├── llm-training/                      # 大模型训练示例
+│   ├── llm-fine-tuning/                   # 大模型微调示例
+│   ├── llm-inference/                     # 大模型推理示例
+│   └── llm-for-science/                   # 科学计算示例
+├── scripts/                               # 🔧 工具脚本
+│   ├── setup/                             # 环境配置脚本
+│   ├── utils/                             # 实用工具脚本
+│   └── llamafactory/                      # 🆕 LLaMA Factory工具集
+│       ├── install_llamafactory.sh       # 一键安装脚本
+│       ├── data_processor.py             # 数据处理工具
+│       ├── train_model.py                # 模型训练脚本
+│       └── inference_server.py           # 推理服务脚本
+└── README.md                              # 📖 项目说明
 ```
 
 ---
+
+
 
 ## 🚀 快速开始
 
 ### 1. 环境要求
 
 #### 硬件要求
-- **DCU设备**：海光DCU Z100/K100/K100-AI系列
+- **DCU设备**：海光DCU Z100/K100/K100-AI/BW1000系列
 - **CPU**：支持海光或兼容x86架构
 - **内存**：建议32GB以上
 - **存储**：SSD 500GB以上
@@ -132,9 +141,9 @@ python train_llama.py --config configs/llama_7b.yaml
 - **指令微调**：针对特定任务的微调
 
 ```bash
-# 运行ChatGLM-6B LoRA微调
-cd examples/llm-fine-tuning
-python finetune_chatglm.py --model chatglm2-6b --method lora
+# 使用LLaMA Factory进行微调
+bash scripts/llamafactory/install_llamafactory.sh
+python scripts/llamafactory/train_model.py --model qwen/Qwen-7B-Chat --dataset custom_data
 ```
 
 ### ⚡ 模型推理
@@ -144,8 +153,7 @@ python finetune_chatglm.py --model chatglm2-6b --method lora
 
 ```bash
 # 启动推理服务
-cd examples/llm-inference
-python inference_server.py --model qwen-7b --port 8000
+python scripts/llamafactory/inference_server.py --model_path /path/to/model --port 8000
 ```
 
 ### 🔬 科学计算
@@ -180,30 +188,14 @@ python matrix_computation.py --size 10000
 
 ---
 
-## 📊 性能基准测试
 
-### 训练性能
-| 模型 | 批次大小 | DCU数量 | 训练速度 | 显存占用 |
-|------|----------|---------|----------|----------|
-| LLaMA-7B | 32 | 4 | 1.2K tokens/s | 28GB |
-| ChatGLM2-6B | 16 | 2 | 800 tokens/s | 22GB |
-| Qwen-7B | 24 | 4 | 1.1K tokens/s | 26GB |
-
-### 推理性能
-| 模型 | 精度 | 延迟 | 吞吐量 |
-|------|------|------|--------|
-| ChatGLM2-6B | FP16 | 45ms | 156 tokens/s |
-| Qwen-7B | FP16 | 52ms | 142 tokens/s |
-| LLaMA-7B | INT8 | 38ms | 178 tokens/s |
-
----
 
 ## 🤝 社区与支持
 
 ### 官方资源
 - **海光DCU开发者社区**：https://developer.sourcefind.cn/
 - **OpenDAS项目**：https://developer.sourcefind.cn/codes/OpenDAS
-- **技术文档**：https://docs.hygon.cn/
+
 
 ### 问题反馈
 - **Issues**：提交Bug报告和功能建议
@@ -221,7 +213,7 @@ python matrix_computation.py --size 10000
 
 ## 📄 许可证
 
-本项目采用Apache 2.0许可证 - 查看[LICENSE](LICENSE)文件了解详情。
+本项目采用MIT许可证 - 查看[LICENSE](LICENSE)文件了解详情。
 
 ---
 
@@ -243,14 +235,22 @@ python matrix_computation.py --size 10000
 - 海光DCU开发者社区
 - ROCm开源社区
 - PyTorch社区
+- LLaMA Factory项目
 - 所有贡献者和用户
 
 ---
 
 <div align="center">
 
-**🌟 如果本项目对您有帮助，请给我们一个Star！🌟**
+**⭐ 如果这个项目对您有帮助，请给个Star支持！⭐**
+<a href="https://star-history.com/#FlyAIBox/dcu-in-action&Date">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=FlyAIBox/dcu-in-action&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=FlyAIBox/dcu-in-action&type=Date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=FlyAIBox/dcu-in-action&type=Date" />
+  </picture>
+</a>
 
-[![Star History Chart](https://api.star-history.com/svg?repos=your-repo/dcu-in-action&type=Date)](https://star-history.com/#your-repo/dcu-in-action&Date)
+**🔗 更多DCU资源：[海光DCU开发者社区](https://developer.sourcefind.cn/)**
 
 </div>
