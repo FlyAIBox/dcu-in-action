@@ -1,0 +1,13 @@
+dcu:
+  device_id: 0
+  enable_monitoring: true
+  memory_fraction: 0.8
+inference:
+  max_length: 512
+  temperature: 0.7
+  top_p: 0.9
+training:
+  batch_size: 32
+  epochs: 100
+  learning_rate: 0.001
+  model_type: llama
