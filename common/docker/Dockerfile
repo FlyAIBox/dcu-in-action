@@ -1,106 +1,82 @@
-# 海光DCU加速卡实战环境Docker镜像
-# 基于官方DCU基础镜像构建
-
-FROM image.sourcefind.cn:5000/dcu/admin/base/pytorch:2.1.0-centos7.9-dtk-25.04-py310
-
-LABEL maintainer="DCU Community <community@sourcefind.cn>"
-LABEL description="海光DCU加速卡实战环境 - 大模型训练、微调、推理与HPC科学计算"
-LABEL version="1.0.0"
-
-# 设置环境变量
-ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=Asia/Shanghai
-ENV PYTHONIOENCODING=utf-8
-ENV LANG=C.UTF-8
-ENV LC_ALL=C.UTF-8
+# 基于海光DCU官方镜像
+FROM image.sourcefind.cn:5000/dcu/admin/base/pytorch:2.4.1-ubuntu22.04-dtk25.04-py3.10
 
 # 设置工作目录
 WORKDIR /workspace
 
-# 更新系统并安装必要的包
-USER root
-RUN yum update -y && \
-    yum install -y \
-        git \
-        wget \
-        curl \
-        vim \
-        htop \
-        tmux \
-        tree \
-        unzip \
-        gcc \
-        gcc-c++ \
-        make \
-        cmake \
-        openssl-devel \
-        libffi-devel \
-        zlib-devel \
-        bzip2-devel \
-        readline-devel \
-        sqlite-devel && \
-    yum clean all
+# 设置环境变量
+ENV PYTHONPATH=/workspace
+ENV DCU_VISIBLE_DEVICES=0,1,2,3
+ENV HIP_VISIBLE_DEVICES=0,1,2,3
+ENV DEBIAN_FRONTEND=noninteractive
 
-# 升级pip并安装基础Python包
+# 安装系统依赖
+RUN apt-get update && apt-get install -y \
+    git \
+    wget \
+    curl \
+    vim \
+    htop \
+    tmux \
+    build-essential \
+    cmake \
+    ninja-build \
+    pkg-config \
+    libssl-dev \
+    libffi-dev \
+    libbz2-dev \
+    libreadline-dev \
+    libsqlite3-dev \
+    libncurses5-dev \
+    libncursesw5-dev \
+    xz-utils \
+    tk-dev \
+    libxml2-dev \
+    libxmlsec1-dev \
+    libffi-dev \
+    liblzma-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# 升级pip
 RUN pip install --upgrade pip setuptools wheel
 
-# 复制requirements文件并安装Python依赖
-COPY requirements.txt /tmp/requirements.txt
-RUN pip install -r /tmp/requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple/ \
-    --trusted-host pypi.tuna.tsinghua.edu.cn
+# 复制requirements文件
+COPY requirements.txt /workspace/
 
-# 安装可选的高性能推理框架
-RUN pip install vllm==0.2.* -i https://pypi.tuna.tsinghua.edu.cn/simple/ \
-    --trusted-host pypi.tuna.tsinghua.edu.cn || echo "vLLM安装失败，跳过"
+# 安装Python依赖
+RUN pip install -r requirements.txt
 
-# 安装PEFT和量化库
-RUN pip install peft>=0.6.0 bitsandbytes>=0.41.0 \
-    -i https://pypi.tuna.tsinghua.edu.cn/simple/ \
-    --trusted-host pypi.tuna.tsinghua.edu.cn
-
-# 安装Jupyter Lab和扩展
-RUN pip install jupyterlab ipywidgets jupyter_contrib_nbextensions \
-    -i https://pypi.tuna.tsinghua.edu.cn/simple/ \
-    --trusted-host pypi.tuna.tsinghua.edu.cn && \
-    jupyter contrib nbextension install --system
-
-# 创建用户
-RUN useradd -m -s /bin/bash dcu && \
-    echo "dcu:dcu" | chpasswd && \
-    usermod -aG wheel dcu
+# 安装额外的开发工具
+RUN pip install \
+    jupyter \
+    jupyterlab \
+    tensorboard \
+    wandb \
+    mlflow \
+    prometheus-client \
+    psutil \
+    gpustat \
+    py3nvml
 
 # 复制项目文件
-COPY . /workspace/dcu-in-action/
-RUN chown -R dcu:dcu /workspace
+COPY . /workspace/
 
-# 切换到普通用户
-USER dcu
+# 设置权限
+RUN chmod +x /workspace/common/setup/*.sh
+RUN chmod +x /workspace/scripts/**/*.sh
 
-# 设置Jupyter配置
-RUN jupyter notebook --generate-config && \
-    echo "c.NotebookApp.ip = '0.0.0.0'" >> ~/.jupyter/jupyter_notebook_config.py && \
-    echo "c.NotebookApp.port = 8888" >> ~/.jupyter/jupyter_notebook_config.py && \
-    echo "c.NotebookApp.open_browser = False" >> ~/.jupyter/jupyter_notebook_config.py && \
-    echo "c.NotebookApp.allow_root = True" >> ~/.jupyter/jupyter_notebook_config.py && \
-    echo "c.NotebookApp.token = ''" >> ~/.jupyter/jupyter_notebook_config.py && \
-    echo "c.NotebookApp.password = ''" >> ~/.jupyter/jupyter_notebook_config.py
+# 创建必要的目录
+RUN mkdir -p /workspace/logs \
+    /workspace/data \
+    /workspace/models \
+    /workspace/checkpoints \
+    /workspace/outputs
 
-# 设置环境变量
-ENV PYTHONPATH=/workspace/dcu-in-action:$PYTHONPATH
-ENV PATH=/workspace/dcu-in-action/scripts:$PATH
+# 安装项目
+RUN pip install -e .
 
 # 暴露端口
-EXPOSE 8888 8000 7860
+EXPOSE 8888 6006 8000 8001
 
-# 设置启动脚本
-COPY docker-entrypoint.sh /usr/local/bin/
-USER root
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-USER dcu
-
-# 健康检查
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD python -c "import torch; print('DCU可用:', torch.cuda.is_available())" || exit 1
-
-# 默认命令
-CMD ["/usr/local/bin/docker-entrypoint.sh"] 
+# 启动命令
+CMD ["bash"] 

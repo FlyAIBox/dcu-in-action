@@ -1,291 +1,149 @@
 version: '3.8'
 
 services:
-  # DCU开发环境主服务
+  # DCU开发环境
   dcu-dev:
     build:
       context: .
       dockerfile: Dockerfile
-    image: dcu-in-action:latest
-    container_name: dcu-dev-main
-    hostname: dcu-dev
-    restart: unless-stopped
-    
-    # DCU设备映射
+    container_name: dcu-in-action-dev
     devices:
-      - /dev/dri:/dev/dri
       - /dev/kfd:/dev/kfd
-    
-    # 端口映射
-    ports:
-      - "8888:8888"   # Jupyter Lab
-      - "8000:8000"   # FastAPI推理服务
-      - "7860:7860"   # Gradio界面
-      - "6006:6006"   # TensorBoard
-    
-    # 卷挂载
+      - /dev/dri:/dev/dri
     volumes:
-      - ./:/workspace/dcu-in-action:rw
-      - dcu-models:/workspace/models
-      - dcu-datasets:/workspace/datasets
-      - dcu-outputs:/workspace/outputs
-      - dcu-cache:/home/dcu/.cache
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw
-    
-    # 环境变量
+      - .:/workspace
+      - ./data:/data
+      - ./models:/models
+      - ./logs:/logs
     environment:
-      - DISPLAY=${DISPLAY:-:0}
-      - NVIDIA_VISIBLE_DEVICES=all
+      - DCU_VISIBLE_DEVICES=0,1,2,3
+      - PYTHONPATH=/workspace
       - HIP_VISIBLE_DEVICES=0,1,2,3
-      - CUDA_VISIBLE_DEVICES=0,1,2,3
-      - PYTHONPATH=/workspace/dcu-in-action
-      - TOKENIZERS_PARALLELISM=false
-      - HF_HOME=/home/dcu/.cache/huggingface
-      - START_JUPYTER=false
-      - START_MONITOR=false
-      - RUN_ENV_CHECK=true
-    
-    # 运行时配置
-    runtime: "runc"
-    
-    # 用户权限
-    user: "1000:1000"
-    
-    # 工作目录
-    working_dir: /workspace/dcu-in-action
-    
-    # 健康检查
-    healthcheck:
-      test: ["CMD", "python", "-c", "import torch; exit(0 if torch.cuda.is_available() else 1)"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-    
-    # 资源限制
-    deploy:
-      resources:
-        limits:
-          memory: 32G
-        reservations:
-          memory: 16G
-    
-    # 安全配置
-    security_opt:
-      - seccomp:unconfined
-    
-    # 默认命令
-    command: ["interactive"]
-
-  # Jupyter Lab专用服务
-  dcu-jupyter:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: dcu-in-action:latest
-    container_name: dcu-jupyter
-    hostname: dcu-jupyter
-    restart: unless-stopped
-    profiles:
-      - jupyter
-    
-    devices:
-      - /dev/dri:/dev/dri
-      - /dev/kfd:/dev/kfd
-    
     ports:
-      - "8889:8888"
-    
-    volumes:
-      - ./:/workspace/dcu-in-action:rw
-      - dcu-models:/workspace/models
-      - dcu-datasets:/workspace/datasets
-      - dcu-outputs:/workspace/outputs
-      - dcu-cache:/home/dcu/.cache
-    
-    environment:
-      - PYTHONPATH=/workspace/dcu-in-action
-      - HIP_VISIBLE_DEVICES=0
-      - HF_HOME=/home/dcu/.cache/huggingface
-    
-    user: "1000:1000"
-    working_dir: /workspace/dcu-in-action
-    command: ["jupyter"]
+      - "8888:8888"  # Jupyter
+      - "6006:6006"  # TensorBoard
+    working_dir: /workspace
+    command: tail -f /dev/null
+    networks:
+      - dcu-network
 
-  # 推理服务专用
-  dcu-inference:
+  # 模型训练服务
+  training-service:
     build:
       context: .
       dockerfile: Dockerfile
-    image: dcu-in-action:latest
-    container_name: dcu-inference
-    hostname: dcu-inference
-    restart: unless-stopped
-    profiles:
-      - inference
-    
-    devices:
-      - /dev/dri:/dev/dri
-      - /dev/kfd:/dev/kfd
-    
-    ports:
-      - "8001:8000"
-    
-    volumes:
-      - ./:/workspace/dcu-in-action:rw
-      - dcu-models:/workspace/models
-      - dcu-cache:/home/dcu/.cache
-    
-    environment:
-      - PYTHONPATH=/workspace/dcu-in-action
-      - HIP_VISIBLE_DEVICES=0,1
-      - HF_HOME=/home/dcu/.cache/huggingface
-      - MODEL_NAME=Qwen/Qwen-7B-Chat
-    
-    user: "1000:1000"
-    working_dir: /workspace/dcu-in-action
-    command: ["inference", "Qwen/Qwen-7B-Chat"]
-
-  # 训练服务专用
-  dcu-training:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: dcu-in-action:latest
     container_name: dcu-training
-    hostname: dcu-training
-    restart: "no"
-    profiles:
-      - training
-    
     devices:
-      - /dev/dri:/dev/dri
       - /dev/kfd:/dev/kfd
-    
+      - /dev/dri:/dev/dri
     volumes:
-      - ./:/workspace/dcu-in-action:rw
-      - dcu-models:/workspace/models
-      - dcu-datasets:/workspace/datasets
-      - dcu-outputs:/workspace/outputs
-      - dcu-cache:/home/dcu/.cache
-    
+      - ./examples/training:/workspace/training
+      - ./data:/data
+      - ./models:/models
+      - ./logs:/logs
     environment:
-      - PYTHONPATH=/workspace/dcu-in-action
-      - HIP_VISIBLE_DEVICES=0,1,2,3
-      - HF_HOME=/home/dcu/.cache/huggingface
-      - WANDB_PROJECT=dcu-training
-    
-    user: "1000:1000"
-    working_dir: /workspace/dcu-in-action
-    command: ["bash"]
+      - DCU_VISIBLE_DEVICES=0,1,2,3
+      - PYTHONPATH=/workspace
+      - MASTER_ADDR=localhost
+      - MASTER_PORT=29500
+    depends_on:
+      - dcu-dev
+    networks:
+      - dcu-network
+
+  # 推理服务
+  inference-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dcu-inference
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    volumes:
+      - ./examples/inference:/workspace/inference
+      - ./models:/models
+      - ./logs:/logs
+    environment:
+      - DCU_VISIBLE_DEVICES=0,1
+      - PYTHONPATH=/workspace
+    ports:
+      - "8000:8000"  # API服务
+      - "8001:8001"  # 管理接口
+    depends_on:
+      - dcu-dev
+    networks:
+      - dcu-network
 
   # 监控服务
-  dcu-monitor:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: dcu-in-action:latest
-    container_name: dcu-monitor
-    hostname: dcu-monitor
-    restart: unless-stopped
-    profiles:
-      - monitor
-    
-    devices:
-      - /dev/dri:/dev/dri
-      - /dev/kfd:/dev/kfd
-    
+  monitoring:
+    image: prom/prometheus:latest
+    container_name: dcu-monitoring
     ports:
-      - "9090:9090"   # 监控面板
-    
+      - "9090:9090"
     volumes:
-      - ./:/workspace/dcu-in-action:rw
-      - dcu-cache:/home/dcu/.cache
-    
-    environment:
-      - PYTHONPATH=/workspace/dcu-in-action
-      - HIP_VISIBLE_DEVICES=0,1,2,3
-    
-    user: "1000:1000"
-    working_dir: /workspace/dcu-in-action
-    command: ["monitor"]
+      - ./configs/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - dcu-network
 
-  # MinIO对象存储服务（用于存储模型和数据）
-  minio:
-    image: minio/minio:latest
-    container_name: dcu-minio
-    hostname: minio
-    restart: unless-stopped
-    profiles:
-      - storage
-    
+  # 可视化服务
+  grafana:
+    image: grafana/grafana:latest
+    container_name: dcu-grafana
     ports:
-      - "9000:9000"   # MinIO API
-      - "9001:9001"   # MinIO Console
-    
-    environment:
-      - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin123
-    
+      - "3000:3000"
     volumes:
-      - minio-data:/data
-    
-    command: server /data --console-address ":9001"
+      - grafana_data:/var/lib/grafana
+      - ./configs/monitoring/grafana:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - monitoring
+    networks:
+      - dcu-network
 
-  # Redis缓存服务
+  # Redis缓存
   redis:
     image: redis:7-alpine
     container_name: dcu-redis
-    hostname: redis
-    restart: unless-stopped
-    profiles:
-      - cache
-    
     ports:
       - "6379:6379"
-    
     volumes:
-      - redis-data:/data
-    
+      - redis_data:/data
     command: redis-server --appendonly yes
+    networks:
+      - dcu-network
 
-# 数据卷定义
+  # 数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: dcu-postgres
+    environment:
+      - POSTGRES_DB=dcu_action
+      - POSTGRES_USER=dcu_user
+      - POSTGRES_PASSWORD=dcu_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - dcu-network
+
 volumes:
-  dcu-models:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${PWD}/models
-  
-  dcu-datasets:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${PWD}/datasets
-  
-  dcu-outputs:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${PWD}/outputs
-  
-  dcu-cache:
-    driver: local
-  
-  minio-data:
-    driver: local
-  
-  redis-data:
-    driver: local
+  prometheus_data:
+  grafana_data:
+  redis_data:
+  postgres_data:
 
-# 网络配置
 networks:
-  default:
-    name: dcu-network
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16 
+  dcu-network:
+    driver: bridge 
