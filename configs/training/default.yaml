@@ -1,0 +1,162 @@
+# DCU-in-Action 默认训练配置
+# 适用于中等规模模型的基础训练设置
+
+# 模型配置
+model:
+  name_or_path: ""  # 模型路径或HuggingFace模型名称
+  model_type: "auto"  # auto, bert, gpt2, llama, etc.
+  config_overrides: {}  # 模型配置覆盖
+
+# 训练参数
+training:
+  # 基础参数
+  batch_size: 8
+  eval_batch_size: 16
+  learning_rate: 5.0e-5
+  num_epochs: 3
+  warmup_ratio: 0.1
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  optimizer_type: "adamw"
+  scheduler_type: "linear"
+  
+  # 梯度累积
+  gradient_accumulation_steps: 1
+  
+  # 优化器设置
+  optimizer:
+    type: "adamw"  # adamw, sgd, adafactor
+    adamw:
+      betas: [0.9, 0.999]
+      eps: 1.0e-8
+    sgd:
+      momentum: 0.9
+    adafactor:
+      scale_parameter: true
+      relative_step_size: false
+  
+  # 学习率调度器
+  scheduler:
+    type: "linear"  # linear, cosine, constant
+    cosine:
+      num_cycles: 0.5
+    constant:
+      factor: 1.0
+
+# 数据配置
+data:
+  max_seq_length: 512
+  dataloader_num_workers: 4
+  dataloader_pin_memory: true
+  preprocessing_num_workers: 4
+  
+  # 数据增强
+  augmentation:
+    enabled: false
+    techniques: []  # ["mask", "replace", "insert", "delete"]
+
+# 混合精度训练
+mixed_precision:
+  enabled: false
+  fp16: false
+  bf16: false
+  loss_scale: null  # 自动缩放
+  gradient_checkpointing: false
+
+# 分布式训练
+distributed:
+  enabled: false
+  backend: "nccl"  # nccl, gloo
+  find_unused_parameters: false
+  
+  # DeepSpeed配置
+  deepspeed:
+    enabled: false
+    config_path: "configs/deepspeed/default.json"
+    zero_optimization:
+      stage: 2  # 0, 1, 2, 3
+      allgather_partitions: true
+      reduce_scatter: true
+      overlap_comm: true
+
+# 输出和日志
+logging:
+  output_dir: "./output"
+  logging_dir: "./logs"
+  logging_steps: 10
+  save_steps: 500
+  eval_steps: 500
+  save_total_limit: 3
+  log_level: "info"  # debug, info, warning, error
+  
+  # Weights & Biases
+  wandb:
+    enabled: false
+    project: "dcu-in-action"
+    entity: ""
+    tags: []
+  
+  # TensorBoard
+  tensorboard:
+    enabled: true
+    log_dir: "./tensorboard_logs"
+
+# 评估配置
+evaluation:
+  strategy: "steps"  # no, steps, epoch
+  eval_delay: 0
+  prediction_loss_only: false
+  
+  # 早停
+  early_stopping:
+    enabled: false
+    patience: 3
+    min_delta: 0.001
+
+# 检查点管理
+checkpointing:
+  save_optimizer: true
+  save_scheduler: true
+  resume_from_checkpoint: null
+  auto_resume: true  # 自动从最新检查点恢复
+  
+  # 模型保存格式
+  save_format: "pytorch"  # pytorch, safetensors
+  save_pretrained: true
+
+# 硬件优化
+hardware:
+  # DCU特定设置
+  dcu:
+    memory_optimization: true
+    kernel_fusion: true
+    mixed_precision_ops: true
+  
+  # 内存管理
+  memory:
+    pin_memory: true
+    non_blocking: true
+    empty_cache_steps: 100
+    max_memory_usage: 0.9  # 最大显存使用率
+
+# 调试和监控
+debug:
+  enabled: false
+  profile: false
+  detect_anomaly: false
+  log_memory: false
+  
+  # 性能监控
+  monitoring:
+    enabled: true
+    interval: 30  # 秒
+    metrics: ["loss", "learning_rate", "throughput", "memory"]
+
+# 随机种子
+seed: 42
+
+# 环境变量
+environment:
+  CUDA_VISIBLE_DEVICES: null
+  OMP_NUM_THREADS: null
+  MKL_NUM_THREADS: null 

@@ -1,0 +1,149 @@
+version: '3.8'
+
+services:
+  # DCU开发环境
+  dcu-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dcu-in-action-dev
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    volumes:
+      - .:/workspace
+      - ./data:/data
+      - ./models:/models
+      - ./logs:/logs
+    environment:
+      - DCU_VISIBLE_DEVICES=0,1,2,3
+      - PYTHONPATH=/workspace
+      - HIP_VISIBLE_DEVICES=0,1,2,3
+    ports:
+      - "8888:8888"  # Jupyter
+      - "6006:6006"  # TensorBoard
+    working_dir: /workspace
+    command: tail -f /dev/null
+    networks:
+      - dcu-network
+
+  # 模型训练服务
+  training-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dcu-training
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    volumes:
+      - ./examples/training:/workspace/training
+      - ./data:/data
+      - ./models:/models
+      - ./logs:/logs
+    environment:
+      - DCU_VISIBLE_DEVICES=0,1,2,3
+      - PYTHONPATH=/workspace
+      - MASTER_ADDR=localhost
+      - MASTER_PORT=29500
+    depends_on:
+      - dcu-dev
+    networks:
+      - dcu-network
+
+  # 推理服务
+  inference-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dcu-inference
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    volumes:
+      - ./examples/inference:/workspace/inference
+      - ./models:/models
+      - ./logs:/logs
+    environment:
+      - DCU_VISIBLE_DEVICES=0,1
+      - PYTHONPATH=/workspace
+    ports:
+      - "8000:8000"  # API服务
+      - "8001:8001"  # 管理接口
+    depends_on:
+      - dcu-dev
+    networks:
+      - dcu-network
+
+  # 监控服务
+  monitoring:
+    image: prom/prometheus:latest
+    container_name: dcu-monitoring
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./configs/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - dcu-network
+
+  # 可视化服务
+  grafana:
+    image: grafana/grafana:latest
+    container_name: dcu-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./configs/monitoring/grafana:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - monitoring
+    networks:
+      - dcu-network
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: dcu-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - dcu-network
+
+  # 数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: dcu-postgres
+    environment:
+      - POSTGRES_DB=dcu_action
+      - POSTGRES_USER=dcu_user
+      - POSTGRES_PASSWORD=dcu_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - dcu-network
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  redis_data:
+  postgres_data:
+
+networks:
+  dcu-network:
+    driver: bridge 

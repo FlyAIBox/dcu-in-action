@@ -86,7 +86,7 @@ check_hardware() {
     log_info "开始硬件检查..."
     
     # 检查DCU设备
-    check_item "DCU设备存在" "lspci | grep -i 'DCU\|Hygon\|Advanced Micro Devices'" true
+    check_item "DCU设备存在" "lspci | grep -i 'DCU\|Hygon\|Haiguang\|Advanced Micro Devices'" true
     
     # 检查内存
     check_item "系统内存充足 (>= 16GB)" "[ \$(free -g | awk '/^Mem:/{print \$2}') -ge 16 ]" true

@@ -1,56 +1,104 @@
-# 深度学习框架
-torch>=2.1.0
-torchvision>=0.16.0
-transformers>=4.35.0
-accelerate>=0.24.0
-peft>=0.6.0
-trl>=0.7.0
-datasets>=2.14.0
+# DCU-in-Action 项目依赖
+# 基础依赖
+torch>=2.0.0
+transformers>=4.30.0
+tokenizers>=0.13.0
+datasets>=2.12.0
+accelerate>=0.20.0
+
+# 大模型相关
+sentencepiece>=0.1.99
+protobuf>=3.20.0
+bitsandbytes>=0.39.0
+peft>=0.4.0
+trl>=0.4.7
+
+# 推理服务
+vllm>=0.2.0
+fastapi>=0.100.0
+uvicorn>=0.22.0
+websockets>=11.0.0
+gradio>=3.35.0
 
 # 科学计算
 numpy>=1.24.0
-scipy>=1.11.0
+scipy>=1.10.0
+pandas>=2.0.0
 scikit-learn>=1.3.0
 matplotlib>=3.7.0
-plotly>=5.17.0
-pandas>=2.1.0
+seaborn>=0.12.0
 
-# GPU/DCU支持
-torch-rocm
-
-# 大模型相关
-tokenizers>=0.14.0
-sentencepiece>=0.1.99
-protobuf>=4.24.0
-bitsandbytes>=0.41.0
-
-# 配置和工具
-pyyaml>=6.0.1
-toml>=0.10.2
-click>=8.1.7
-tqdm>=4.66.0
-rich>=13.6.0
-
-# 监控和日志
-tensorboard>=2.14.0
+# 深度学习工具
+tensorboard>=2.13.0
 wandb>=0.15.0
+mlflow>=2.4.0
+optuna>=3.2.0
+
+# 分布式训练
+deepspeed>=0.9.0
+fairscale>=0.4.13
+
+# 数据处理
+pillow>=9.5.0
+opencv-python>=4.7.0
+librosa>=0.10.0
+jieba>=0.42.1
+
+# 网络和API
+requests>=2.31.0
+aiohttp>=3.8.0
+httpx>=0.24.0
+pydantic>=2.0.0
+
+# 配置管理
+pyyaml>=6.0
+omegaconf>=2.3.0
+hydra-core>=1.3.0
+python-dotenv>=1.0.0
+
+# 日志和监控
+loguru>=0.7.0
+rich>=13.4.0
+tqdm>=4.65.0
 psutil>=5.9.0
-gpustat>=1.1.1
+prometheus-client>=0.17.0
+py-spy>=0.3.14
 
-# Web和API
-fastapi>=0.104.0
-uvicorn>=0.24.0
-gradio>=3.50.0
-streamlit>=1.28.0
+# 数据库
+sqlalchemy>=2.0.0
+redis>=4.6.0
+pymongo>=4.4.0
 
-# 开发工具
+# 测试
 pytest>=7.4.0
 pytest-cov>=4.1.0
-black>=23.9.0
-isort>=5.12.0
-flake8>=6.1.0
-mypy>=1.6.0
+pytest-mock>=3.11.0
+pytest-asyncio>=0.21.0
 
-# 容器化
-docker>=6.1.0
-docker-compose>=1.29.0 
+# 代码质量
+black>=23.0.0
+isort>=5.12.0
+flake8>=6.0.0
+mypy>=1.4.0
+bandit>=1.7.5
+safety>=2.3.0
+
+# 开发工具
+jupyter>=1.0.0
+jupyterlab>=4.0.0
+ipython>=8.14.0
+ipywidgets>=8.0.0
+
+# 性能分析
+py-spy>=0.3.14
+memory-profiler>=0.60.0
+line-profiler>=4.0.0
+scalene>=1.5.0
+
+# 其他工具
+fire>=0.5.0
+click>=8.1.0
+typer>=0.9.0
+tabulate>=0.9.0
+colorama>=0.4.6
+humanize>=4.7.0 

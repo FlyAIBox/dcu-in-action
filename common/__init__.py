@@ -1,10 +1,24 @@
 """
-海光DCU公共工具类库
-
-提供DCU设备管理、大模型工具、HPC计算等功能的统一接口。
+DCU-in-Action 通用模块
+提供DCU设备管理、大模型工具、HPC计算、通用工具等功能
 """
 
+from .dcu.device_manager import DCUDeviceManager
+from .utils.logger import get_logger, setup_global_logging
+from .utils.monitor import SystemMonitor, DCUMonitor
+
+# 版本信息
 __version__ = "1.0.0"
+__author__ = "DCU-in-Action Team"
+
+# 公开接口
+__all__ = [
+    "DCUDeviceManager",
+    "get_logger",
+    "setup_global_logging", 
+    "SystemMonitor",
+    "DCUMonitor",
+]
 
 # 懒加载模块避免依赖问题
 def get_dcu_manager():
