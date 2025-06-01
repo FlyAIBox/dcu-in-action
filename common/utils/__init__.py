@@ -5,6 +5,7 @@
 
 from .logger import get_logger, setup_global_logging, performance_monitor
 from .monitor import SystemMonitor, DCUMonitor
+from .config_manager import ConfigManager
 
 __all__ = [
     "get_logger",
@@ -12,4 +13,5 @@ __all__ = [
     "performance_monitor", 
     "SystemMonitor",
     "DCUMonitor",
+    "ConfigManager",
 ] 

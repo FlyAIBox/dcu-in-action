@@ -1,0 +1,70 @@
+# DCU-in-Action 项目核心依赖
+# 如需完整依赖，请参考 common/docker/requirements.txt
+
+# 基础依赖
+# PyTorch：https://das.sourcefind.cn:55011/portal/#/installation?id=04749079-6b33-11ef-b472-005056904552&type=frame
+torch==2.4.1+das.opt2.dtk2504
+numpy==1.24.0
+pyyaml==6.0
+psutil==5.9.0
+
+# 日志和监控
+loguru==0.7.0
+rich==13.4.0
+tqdm==4.65.0
+
+# 网络和API
+requests==2.31.0
+pydantic==2.0.0
+
+# 配置管理
+python-dotenv==1.0.0
+
+# 科学计算
+scipy==1.10.0
+pandas==2.0.0
+
+# 大模型相关（可选）
+# lmslim：0.2.1+das.dtk2504
+# https://das.sourcefind.cn:55011/portal/#/installation?id=dd120679-6c15-11ef-bf92-005056904552&type=frame
+#wget --content-disposition 'https://download.sourcefind.cn:65024/file/4/lmslim/DAS1.5/lmslim-0.2.1+das.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl'
+lmslim==0.2.1+das.dtk2504
+
+# flash-attn：2.6.1+das.opt4.dtk2504
+#wget --content-disposition 'https://download.sourcefind.cn:65024/file/4/flash_attn/DAS1.5/flash_attn-2.6.1+das.opt4.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl'
+flash-attn==2.6.1+das.opt4.dtk2504
+
+# vllm: ≥0.4.3 / 0.6.2+das.opt3.dtk2504
+#wget --content-disposition 'https://download.sourcefind.cn:65024/file/4/vllm/DAS1.5/vllm-0.6.2+das.opt3.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl'
+vllm==0.6.2+das.opt3.dtk2504
+
+#deepspeed: 0.14.2+das.opt2.dtk2504
+#wget --content-disposition 'https://download.sourcefind.cn:65024/file/4/deepspeed/DAS1.5/deepspeed-0.14.2+das.opt2.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl'
+deepspeed==0.14.2+das.opt2.dtk2504
+
+#triton==2.0.0+das.opt2.dtk2504
+#wget --content-disposition 'https://download.sourcefind.cn:65024/file/4/triton/DAS1.5/triton-2.0.0+das.opt2.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl'
+triton==2.0.0+das.opt2.dtk2504
+
+#transformer-engine：https://das.sourcefind.cn:55011/portal/#/installation?id=d091bbbf-fb10-11ef-915b-0242ac160002&type=frame
+#wget --content-disposition 'https://download.sourcefind.cn:65024/file/4/transformer_engine/DAS1.5/transformer_engine-1.9.0+das.opt2.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl'
+transformer-engine==1.9.0+das.opt2.dtk2504
+
+transformers==4.30.0
+tokenizers==0.13.0
+datasets==2.12.0
+accelerate==0.20.0
+
+# 推理服务（可选）
+fastapi==0.100.0
+uvicorn==0.22.0
+gradio==3.35.0
+
+# 测试
+pytest==7.4.0
+pytest-cov==4.1.0
+
+# 开发工具
+black==23.0.0
+isort==5.12.0
+flake8==6.0.0 
