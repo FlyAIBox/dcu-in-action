@@ -1,5 +1,0 @@
-dcu:
-  device_id: 0
-  memory_fraction: 0.8
-training:
-  batch_size: 32

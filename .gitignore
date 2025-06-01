@@ -327,3 +327,6 @@ yarn-error.log*
 
 # Local environment
 .local/ 
+
+#TEST
+test_config.yaml
