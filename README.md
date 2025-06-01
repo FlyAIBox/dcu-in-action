@@ -108,8 +108,8 @@ graph TB
 | **推理引擎** | vLLM | ≥ 0.2.0 | 高性能推理服务 |
 | **微调框架** | LlamaFactory | ≥ 0.6.0 | 模型微调工具 |
 | **科学计算** | NumPy/SciPy | Latest | 数值计算库 |
-| **容器化** | Docker/K8s | ≥ 20.10 | 容器化部署 |
-
+| **容器化** | Docker | ≥ 20.10 | 容器化部署 |
+| **容器编排** | K8s | ≥ 1.22 | 容器编排和调度 |
 ---
 
 ## 📁 项目结构
@@ -119,120 +119,227 @@ dcu-in-action/
 ├── 📁 common/                              # 🔧 核心工具库
 │   ├── 📁 dcu/                            # DCU硬件管理
 │   │   ├── device_manager.py              # 设备管理和监控
-│   │   ├── memory_optimizer.py            # 显存优化策略
-│   │   └── performance_profiler.py        # 性能分析工具
+│   │   └── __init__.py                    # 模块初始化
 │   ├── 📁 llm/                            # 大模型工具链
-│   │   ├── model_loader.py               # 模型加载和管理
-│   │   ├── tokenizer_utils.py            # 分词器工具
-│   │   └── training_utils.py             # 训练辅助工具
+│   │   ├── training_utils.py              # 训练辅助工具
+│   │   ├── finetune_utils.py              # 微调工具集
+│   │   ├── inference_utils.py             # 推理工具集
+│   │   └── __init__.py                    # 模块初始化
 │   ├── 📁 hpc/                            # HPC计算工具
-│   │   ├── parallel_utils.py             # 并行计算框架
-│   │   └── numerical_solver.py           # 数值求解器
+│   │   ├── numerical_solver.py            # 数值求解器
+│   │   └── __init__.py                    # 模块初始化
 │   ├── 📁 utils/                          # 通用工具
 │   │   ├── config_manager.py             # 配置管理系统
 │   │   ├── logger.py                     # 统一日志系统
-│   │   └── monitor.py                    # 系统监控工具
-│   └── 📁 setup/                          # 环境配置
-│       ├── install_dependencies.sh       # 自动依赖安装
-│       └── check_environment.sh          # 环境检查脚本
+│   │   ├── monitor.py                    # 系统监控工具
+│   │   ├── monitor_performance.py        # 性能监控工具
+│   │   └── __init__.py                   # 模块初始化
+│   ├── 📁 setup/                          # 环境配置
+│   │   ├── install_dependencies.sh       # 自动依赖安装
+│   │   ├── install_requirements.sh       # 快速依赖安装
+│   │   └── check_environment.sh          # 环境检查脚本
+│   ├── 📁 docker/                         # Docker相关文件
+│   └── __init__.py                       # 核心模块初始化
 ├── 📁 examples/                           # 🎯 实战示例
-│   ├── 📁 training/                      # 模型训练示例
+│   ├── 📁 basic/                         # 基础示例
+│   ├── 📁 llm-training/                  # 大模型训练示例
 │   │   ├── llama_pretraining/           # LLaMA预训练完整流程
 │   │   ├── chatglm_training/            # ChatGLM训练实战
-│   │   └── distributed_training/        # 分布式训练方案
-│   ├── 📁 finetuning/                    # 模型微调示例
-│   │   ├── llamafactory/                # LlamaFactory微调框架
-│   │   ├── lora_finetuning/             # LoRA高效微调
-│   │   ├── qlora_finetuning/            # QLoRA量化微调
-│   │   └── instruction_tuning/          # 指令微调实战
-│   ├── 📁 inference/                     # 推理服务示例
-│   │   ├── vllm_serving/                # vLLM推理服务部署
-│   │   ├── batch_inference/             # 批量推理优化
-│   │   └── streaming_chat/              # 流式对话服务
-│   ├── 📁 hpc/                          # HPC计算示例
-│   │   ├── matrix_computation/          # 大规模矩阵计算
-│   │   ├── pde_solving/                 # 偏微分方程求解
-│   │   └── parallel_computing/          # 并行计算优化
-│   └── 📁 benchmarks/                    # 性能基准测试
+│   │   ├── distributed_training/        # 分布式训练方案
+│   │   └── train_llama.py               # LLaMA训练脚本
+│   ├── 📁 llm-fine-tuning/              # 大模型微调示例
+│   ├── 📁 llm-inference/                # 大模型推理示例
+│   │   ├── chatglm_inference.py         # ChatGLM推理示例
+│   │   ├── vllm_server.py               # vLLM推理服务
+│   │   └── simple_test.py               # 简单测试脚本
+│   ├── 📁 llm-for-science/              # 科学计算LLM应用
+│   ├── 📁 benchmarks/                    # 性能基准测试
+│   ├── 📁 datasets/                      # 数据集相关
+│   └── 📁 configs/                       # 示例配置文件
 ├── 📁 docs/                               # 📚 完整文档
-│   ├── 📁 tutorials/                     # 分步教程
-│   │   ├── 01-environment-setup.md       # 环境搭建指南
-│   │   ├── 02-model-training.md          # 模型训练教程
-│   │   ├── 03-model-finetuning.md        # 模型微调指南
-│   │   ├── 04-model-inference.md         # 模型推理部署
-│   │   └── 05-hpc-computing.md           # HPC计算实战
-│   ├── 📁 api/                           # API参考文档
-│   └── 📁 architecture/                  # 架构设计文档
-├── 📁 configs/                           # ⚙️ 配置文件
-│   ├── 📁 models/                       # 模型配置模板
-│   ├── 📁 training/                     # 训练配置模板
-│   └── 📁 inference/                    # 推理配置模板
-├── 📁 scripts/                           # 🔧 自动化脚本
-│   ├── 📁 setup/                        # 环境配置脚本
-│   ├── 📁 deployment/                   # 部署自动化脚本
-│   └── 📁 monitoring/                   # 监控脚本
-├── 📁 tests/                            # 🧪 测试用例
-└── 📄 README.md                        # 项目说明文档
+│   ├── 📁 manual/                        # 手册文档
+│   ├── 📁 img/                           # 图片资源
+│   ├── 📁 base/                          # 基础文档
+│   ├── 01-environment-setup.md           # 环境搭建指南
+│   ├── 01-dcu-installation.md            # DCU安装指南
+│   ├── 01-DTK安装.md                     # DTK安装指南
+│   ├── 02-llm-inference.md               # 大模型推理教程
+│   ├── 03-llm-fine-tuning.md             # 大模型微调教程
+│   ├── 04-llm-training.md                # 大模型训练教程
+│   └── 05-llm-for-science.md             # 科学计算LLM教程
+├── 📄 README.md                        # 项目说明文档
+├── 📄 CONTRIBUTING.md                  # 贡献指南
+├── 📄 LICENSE                          # 开源协议
+├── 📄 requirements.txt                 # Python依赖清单
+├── 📄 requirements-full.txt            # 完整依赖清单
+└── 📄 .gitignore                       # Git忽略文件配置
 ```
 
 ---
 
-## 🚀 快速开始
+## 📋 环境信息
+1. 产品类型 ：Rack Mount Chassis / X7850H0
+2. BMC芯片型号：AST2600-A3
+3. 操作系统：Ubuntu22.04.4
+4. 内核：5.15.0-94-generic
+5. BIOS版本号：CHH3050021
+6. DCU加速卡：K100-AI
+7. DCU驱动：rock-6.3.8
+8. DTK：25.04
+9. Python: 3.10.12
+10. Conda: 22.9.0
+11. Docker: 28.1.1
+12. Docker Compose ：v2.35.1
 
-### 📋 环境要求
+## ⚡ 快速安装
 
-| 组件 | 最低要求 | 推荐配置 |
-|------|----------|----------|
-| **操作系统** | Ubuntu 20.04+ | Ubuntu 22.04 LTS |
-| **Python** | 3.8+ | 3.10+ |
-| **DCU驱动** | 5.0+ | 最新版本 |
-| **内存** | 32GB | 64GB+ |
-| **存储** | 500GB | 2TB+ SSD |
-
-### ⚡ 一键安装
-
+### 1. 克隆项目
 ```bash
-# 1. 克隆项目
 git clone https://github.com/your-org/dcu-in-action.git
 cd dcu-in-action
-
-# 2. 自动环境检查和安装
-make install
-
-# 3. 验证安装
-make test
 ```
 
-### 🔧 手动安装
-
+### 2. 创建虚拟环境
 ```bash
-# 1. 检查DCU环境
-./common/setup/check_environment.sh
+# 使用 conda
+conda create -n dcu_env python=3.10
+conda activate dcu_env
 
-# 2. 安装Python依赖
+# 或使用 venv
+python -m venv dcu_env
+source dcu_env/bin/activate  # Linux/Mac
+# dcu_env\Scripts\activate  # Windows
+```
+
+### 3. 智能依赖安装
+
+#### 🎯 推荐方式：使用智能安装脚本
+```bash
+# 一键安装（推荐标准模式）
+./common/setup/install_requirements.sh --mode standard
+
+# 仅检查环境
+./common/setup/install_requirements.sh --check
+
+# 完整安装（包含所有功能）
+./common/setup/install_requirements.sh --mode full
+
+```
+
+#### 📦 手动安装
+```bash
+# 选择一种安装方式：
+
+# 方式1：标准安装（推荐）
 pip install -r requirements.txt
 
-# 3. 安装DCU相关依赖
-./common/setup/install_dependencies.sh
+# 方式2：完整安装（所有功能）
+pip install -r requirements-full.txt
 
-# 4. 配置环境变量
-export DCU_VISIBLE_DEVICES=0
-export PYTHONPATH=$PWD:$PYTHONPATH
 ```
 
-### 🎯 快速验证
+### 4. DCU 深度学习特定依赖（可选）
+
+如果您有DCU硬件环境，请下载对应的DAS优化包：
 
 ```bash
-# 验证DCU设备
-python -c "from common.dcu import device_manager; print(device_manager.get_device_info())"
+# 从官方下载页面获取DCU专用包
+# https://das.sourcefind.cn:55011/portal/#/home
 
-# 运行基础示例
-cd examples/basic
-python hello_dcu.py
+# 下载后安装（示例）
+wget --content-disposition 'https://download.sourcefind.cn:65024/file/4/torch/DAS1.5/torch-2.4.1+das.opt2.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl'
+pip install torch-2.4.1+das.opt2.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl
+```
 
-# 运行性能基准
-cd examples/benchmarks
-python dcu_benchmark.py
+## 🎯 快速验证
+
+### 运行基础测试
+```bash
+# 测试 DCU 管理器
+python examples/basic/test_dcu_manager.py
+```
+
+如果看到类似以下输出，说明安装成功：
+```
+==================================================
+DCU Manager Basic Test
+==================================================
+DCU Available: True
+Device Count: 2
+...
+==================================================
+Test completed successfully!
+==================================================
+```
+
+### 验证安装状态
+```bash
+# 使用安装脚本验证
+./common/setup/install_requirements.sh --check
+
+# 手动验证关键包
+python -c "import torch, transformers, fastapi; print('核心包安装成功!')"
+```
+
+### 检查生成的配置文件
+```bash
+cat test_config.yaml
+```
+
+## 🛠️ 核心功能
+
+### 1. DCU 设备管理
+```python
+from common.dcu import DCUManager
+
+# 初始化设备管理器
+dcu = DCUManager()
+
+# 检查设备可用性
+print(f"DCU Available: {dcu.is_available()}")
+print(f"Device Count: {dcu.get_device_count()}")
+
+# 获取设备信息
+devices = dcu.get_all_devices_info()
+for device in devices:
+    print(f"Device: {device.name}")
+    print(f"Memory: {device.memory_total} MB")
+```
+
+### 2. 配置管理
+```python
+from common.utils import ConfigManager
+
+# 创建配置管理器
+config = ConfigManager()
+
+# 设置配置
+config.set('dcu.device_id', 0)
+config.set('training.batch_size', 32)
+
+# 获取配置
+device_id = config.get('dcu.device_id')
+batch_size = config.get('training.batch_size')
+
+# 保存配置
+config.save_config('my_config.yaml')
+```
+
+### 3. 性能监控
+```python
+from common.dcu import DCUManager
+
+dcu = DCUManager()
+
+# 开始监控
+dcu.start_monitoring(interval=1.0)
+
+# 获取性能摘要
+summary = dcu.get_performance_summary()
+print(summary)
+
+# 停止监控
+dcu.stop_monitoring()
 ```
 
 ---
@@ -243,13 +350,13 @@ python dcu_benchmark.py
 
 #### LLaMA预训练
 ```bash
-cd examples/training/llama_pretraining
+cd examples/llm-training/llama_pretraining
 python train_llama.py --config configs/llama_7b.yaml
 ```
 
 #### 分布式训练
 ```bash
-cd examples/training/distributed_training
+cd examples/llm-training/distributed_training
 torchrun --nproc_per_node=4 train_distributed.py
 ```
 
@@ -257,13 +364,13 @@ torchrun --nproc_per_node=4 train_distributed.py
 
 #### LoRA微调
 ```bash
-cd examples/finetuning/lora_finetuning
+cd examples/llm-fine-tuning
 python lora_finetune.py --model_name llama2-7b --dataset alpaca
 ```
 
 #### LlamaFactory微调
 ```bash
-cd examples/finetuning/llamafactory
+cd examples/llm-fine-tuning
 llamafactory-cli train --config_path configs/lora_config.yaml
 ```
 
@@ -271,30 +378,28 @@ llamafactory-cli train --config_path configs/lora_config.yaml
 
 #### vLLM推理服务
 ```bash
-cd examples/inference/vllm_serving
-python -m vllm.entrypoints.api_server \
-    --model /path/to/model \
-    --tensor-parallel-size 4
+cd examples/llm-inference
+python vllm_server.py --model /path/to/model --tensor-parallel-size 4
 ```
 
-#### 流式对话服务
+#### ChatGLM推理
 ```bash
-cd examples/inference/streaming_chat
-python chat_server.py --model_path /path/to/model
+cd examples/llm-inference
+python chatglm_inference.py --model_path /path/to/model
 ```
 
 ### 🔬 HPC科学计算
 
-#### 大规模矩阵计算
+#### 科学计算LLM应用
 ```bash
-cd examples/hpc/matrix_computation
-python large_matrix_ops.py --size 10000 --precision float32
+cd examples/llm-for-science
+python scientific_computing.py --task matrix_ops --size 10000
 ```
 
-#### 偏微分方程求解
+#### 数值求解
 ```bash
-cd examples/hpc/pde_solving
-python heat_equation_solver.py --grid_size 1024
+cd examples/llm-for-science
+python numerical_analysis.py --problem pde_solving --grid_size 1024
 ```
 
 ---
@@ -345,18 +450,19 @@ profiler.generate_report('performance_report.html')
 ## 📖 教程文档
 
 ### 🎓 入门教程
-- [环境搭建指南](docs/tutorials/01-environment-setup.md) - 从零开始搭建DCU开发环境
-- [第一个DCU程序](docs/tutorials/02-first-dcu-program.md) - Hello DCU示例
+- [环境搭建指南](docs/01-environment-setup.md) - 从零开始搭建DCU开发环境
+- [DCU安装指南](docs/01-dcu-installation.md) - DCU驱动和环境安装
+- [DTK安装指南](docs/01-DTK安装.md) - DTK工具链安装配置
 
 ### 🚀 进阶教程
-- [大模型训练实战](docs/tutorials/02-model-training.md) - 完整的模型训练流程
-- [高效模型微调](docs/tutorials/03-model-finetuning.md) - LoRA/QLoRA微调技术
-- [推理服务部署](docs/tutorials/04-model-inference.md) - 生产环境推理服务
+- [大模型训练实战](docs/04-llm-training.md) - 完整的模型训练流程
+- [高效模型微调](docs/03-llm-fine-tuning.md) - LoRA/QLoRA微调技术
+- [推理服务部署](docs/02-llm-inference.md) - 生产环境推理服务
 
 ### 🔬 专业教程
-- [HPC科学计算](docs/tutorials/05-hpc-computing.md) - 高性能科学计算应用
-- [分布式训练](docs/tutorials/06-distributed-training.md) - 大规模分布式训练
-- [性能优化指南](docs/tutorials/07-performance-optimization.md) - 深度性能优化技巧
+- [科学计算LLM应用](docs/05-llm-for-science.md) - 大模型在科学计算中的应用
+- [依赖管理指南](docs/DEPENDENCIES.md) - 项目依赖和环境管理
+- [快速开始指南](QUICKSTART.md) - 项目快速上手指南
 
 ---
 

@@ -52,8 +52,8 @@ DCU: K100-AI
 DTK: 25.04
 python: 3.10
 
-#  torch: 2.4.1 / 2.4.1+das.opt2.dtk2504
-pip install torch-2.4.1+das.opt2.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl
+#  torch==2.4.1+das.opt2.dtk2504
+wget --content-disposition 'https://download.sourcefind.cn:65024/file/4/pytorch/DAS1.5/torch-2.4.1+das.opt2.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl'
 
 # lmslim==0.2.1
 wget --content-disposition 'https://download.sourcefind.cn:65024/file/4/lmslim/DAS1.5/lmslim-0.2.1+das.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl'
