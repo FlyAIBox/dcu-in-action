@@ -1,0 +1,329 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+common/__pycache__/
+common/utils/__pycache__/
+common/dcu/__pycache__/
+common/dcu/utils/__pycache__/
+common/dcu/models/__pycache__/
+common/dcu/datasets/__pycache__/
+common/dcu/metrics/__pycache__/
+common/dcu/metrics/utils/__pycache__/
+common/dcu/metrics/metrics/__pycache__/
+common/dcu/metrics/metrics/utils/__pycache__/
+common/dcu/metrics/metrics/metrics/__pycache__/
+common/dcu/metrics/metrics/metrics/utils/__pycache__/
+common/dcu/metrics/metrics/metrics/metrics/__pycache__/
+common/dcu/metrics/metrics/metrics/metrics/utils/__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+#   install all needed dependencies.
+#Pipfile.lock
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# Log files and directories
+logs/
+*.log
+log/
+*.out
+
+# IDE and Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+conda-meta/
+.conda/
+
+# Machine Learning specific
+*.pkl
+*.pickle
+*.joblib
+*.h5
+*.hdf5
+*.npz
+*.npy
+models/
+checkpoints/
+wandb/
+mlruns/
+tensorboard_logs/
+experiments/
+outputs/
+results/
+*.ckpt
+*.pth
+*.pt
+*.safetensors
+
+# Data files
+data/
+datasets/
+*.csv
+*.json
+*.jsonl
+*.parquet
+*.feather
+*.arrow
+
+# DCU specific files
+*.hip
+*.o
+*.a
+*.out
+*.exe
+rocm_smi_log*
+*.rocm
+
+# Docker files
+.dockerignore
+*.tar
+*.tar.gz
+docker-compose.override.yml
+
+# Kubernetes
+*.yaml.bak
+*.yml.bak
+kustomization.yaml.bak
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+.temp/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Cache directories
+.cache/
+.pip-cache/
+.npm/
+.yarn/
+
+# Coverage reports
+htmlcov/
+.coverage
+coverage.xml
+*.cover
+
+# pytest
+.pytest_cache/
+
+# Backup files
+*.bak
+*.backup
+*.old
+*~
+
+# Configuration files with sensitive data
+config.local.py
+local_config.py
+.secrets
+secrets.yaml
+.env.local
+.env.production
+.env.development
+
+# Large files that shouldn't be tracked
+*.bin
+*.model
+*.weights
+*.pb
+*.onnx
+*.tflite
+
+# Jupyter notebook outputs
+*.ipynb_checkpoints/
+
+# Weights & Biases
+wandb/
+
+# MLflow
+mlruns/
+
+# TensorBoard
+runs/
+tb_logs/
+
+# Hydra
+outputs/
+.hydra/
+
+# DVC
+.dvc/
+*.dvc
+
+# Profiling data
+*.prof
+*.lprof
+*.py.prof
+
+# Memory profiling
+*.mprof
+
+# Node.js (if using any JS tooling)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build artifacts
+*.o
+*.so
+*.dylib
+*.dll
+
+# Distribution
+*.egg
+*.whl
+
+# Security
+*.pem
+*.key
+*.crt
+*.csr
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Local environment
+.local/ 
