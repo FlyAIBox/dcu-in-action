@@ -330,3 +330,4 @@ yarn-error.log*
 
 #TEST
 test_config.yaml
+dcu_environment_report*

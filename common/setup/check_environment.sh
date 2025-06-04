@@ -111,7 +111,7 @@ check_drivers() {
     fi
     
     # 检查内核模块
-    check_item "DCU内核模块已加载" "lsmod | grep -E 'amdgpu|dcu'" false
+    check_item "DCU内核模块已加载" "lsmod | grep -E 'amdgpu|dcu|hycu'" false
     
     echo ""
 }
@@ -132,12 +132,42 @@ check_software() {
     check_item "pip 已安装" "command -v pip3" true
     
     # 检查DTK
-    check_item "DTK 已安装" "command -v dtk-config" true
+    check_item "DTK 已安装" "command -v hy-smi" true
     
-    if command -v dtk-config > /dev/null 2>&1; then
-        DTK_VERSION=$(dtk-config --version 2>/dev/null || echo "未知")
+    # if command -v hy-smi > /dev/null 2>&1; then
+    #     DTK_VERSION=$(dtk-config --version 2>/dev/null || echo "未知")
+    #     log_info "DTK版本: $DTK_VERSION"
+    # fi
+
+    if command -v hy-smi > /dev/null 2>&1; then # 检查DTK环境是否可能已激活
+        DTK_VERSION="未知" # 默认值
+
+        # 1. 检查 ROCM_PATH 是否已设置
+        if [ -z "$ROCM_PATH" ]; then
+            DTK_VERSION="未知 (ROCM_PATH 环境变量未设置)"
+        # 2. 检查版本文件是否存在且可读
+        elif [ ! -r "$ROCM_PATH/.dtk_version" ]; then
+            DTK_VERSION="未知 (版本文件 '$ROCM_PATH/.dtk_version' 不存在或不可读)"
+        else
+            # 3. 从文件中提取以 "DTK-" 开头的行
+            # 使用 grep 查找以 "DTK-" 开头的行，并用 head -n 1确保只取第一行（以防万一有多行匹配）
+            version_line_from_file=$(grep '^DTK-' "$ROCM_PATH/.dtk_version" | head -n 1)
+
+            if [ -n "$version_line_from_file" ]; then
+                DTK_VERSION="$version_line_from_file" # 整行 "DTK-25.04"
+                # 如果您只需要 "25.04" 部分，可以取消下面一行的注释并注释掉上面一行：
+                # DTK_VERSION="${version_line_from_file#DTK-}"
+            else
+                DTK_VERSION="未知 (在 '$ROCM_PATH/.dtk_version' 中未找到以 'DTK-' 开头的行)"
+            fi
+        fi
         log_info "DTK版本: $DTK_VERSION"
-    fi
+    else
+        # 如果 hy-smi 命令不存在
+        log_info "DTK环境: hy-smi 命令未找到, DTK版本检查跳过。"
+        # 如果需要在这种情况下也明确设置 DTK_VERSION，可以取消下面一行的注释
+        # DTK_VERSION="未知 (hy-smi 未找到)"
+    fi    
     
     # 检查Docker
     check_item "Docker 已安装" "command -v docker" false
@@ -183,8 +213,8 @@ check_network_permissions() {
     log_info "开始网络和权限检查..."
     
     # 检查网络连接
-    check_item "网络连接正常" "ping -c 1 google.com" false
-    check_item "Hugging Face可访问" "curl -s --connect-timeout 5 https://huggingface.co > /dev/null" false
+    check_item "网络连接正常" "ping -c 1 baidu.com" false
+    check_item "Hugging Face代理可访问" "curl -s --connect-timeout 5 https://hf-mirror.com/ > /dev/null" false
     
     # 检查DCU设备权限
     if [ -e /dev/dri/card0 ]; then
@@ -264,7 +294,7 @@ generate_report() {
         echo "操作系统: $(cat /etc/os-release 2>/dev/null | grep PRETTY_NAME | cut -d'"' -f2 || echo '未知')"
         echo "内核版本: $(uname -r)"
         echo "Python: $(python3 --version 2>&1 || echo '未安装')"
-        echo "DTK: $(dtk-config --version 2>/dev/null || echo '未安装')"
+        echo "DTK: $(grep '^DTK-' "$ROCM_PATH/.dtk_version" | head -n 1 || echo '未安装')"
         echo "Docker: $(docker --version 2>/dev/null || echo '未安装')"
         echo ""
         
@@ -299,14 +329,13 @@ provide_suggestions() {
     
     if ! command -v hy-smi > /dev/null 2>&1; then
         echo "• DCU驱动未安装:"
-        echo "  sudo apt update && sudo apt install dcu-driver"
-        echo "  或下载最新驱动: https://developer.sourcefind.cn/"
+        echo "  参考DCU开发社区安装: https://developer.sourcefind.cn/"
         echo ""
     fi
     
     if ! python3 -c 'import torch' > /dev/null 2>&1; then
         echo "• PyTorch未安装:"
-        echo "  pip install torch torchvision --index-url https://download.pytorch.org/whl/rocm5.6"
+        echo "  参考DCU开发社区安装: https://developer.sourcefind.cn/"
         echo ""
     fi
     
@@ -326,7 +355,6 @@ provide_suggestions() {
     
     echo "• 获取更多帮助:"
     echo "  官方文档: https://developer.sourcefind.cn/"
-    echo "  社区论坛: https://bbs.sourcefind.cn/"
 }
 
 # 主函数
