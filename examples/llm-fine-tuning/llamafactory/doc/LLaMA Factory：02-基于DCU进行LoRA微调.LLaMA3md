@@ -1,4 +1,4 @@
-# LLaMA Factory：02-基于DCU进行LoRA微调
+# LLaMA Factory：02-基于DCU进行LoRA微调Llama3
 
 > 仓库地址：https://developer.sourcefind.cn/codes/OpenDAS/llama-factory
 
@@ -1550,7 +1550,7 @@ NameError: name 'amdsmi' is not defined
 
 ------
 
-**解决方案 :**
+**解决方案 1:**
 
 通过修改 PyTorch 的源代码文件 `/root/anaconda3/envs/dcu_llm_fine/lib/python3.10/site-packages/torch/cuda/__init__.py` 中的 `_raw_device_count_amdsmi` 函数，解决了这个问题。
 
@@ -1575,11 +1575,42 @@ def _raw_device_count_amdsmi() -> int:
 
 这个改动使得 `_raw_device_count_amdsmi` 函数在尝试执行任何 `amdsmi` 初始化或调用之前就直接返回 `-1`。在 PyTorch 中，类似的设备计数函数返回 `-1` 通常表示无法通过该特定方法获取设备数量。
 
+**解决方案 2:**
+
+卸载虚拟环境和物理环境中的`amdsmi`和`pynvml`
+
 ------
 
-**进一步的建议与思考:**
+**问：如果 `pynvml` 无法通过 `pip` 正常卸载或卸载不干净，应如何手动彻底清除？**
 
-虽然修改使得程序能够继续运行，避免了报错，但它实际上是绕过了通过 AMDSMI 获取 AMD GPU 信息的步骤。如果返回 `-1` 导致 PyTorch 或上层应用（如 LlamaFactory/VLLM）无法正确识别或利用你的 K100-AI DCU，可能会影响训练性能或导致其他潜在问题。
+答：
+
+1. 定位文件：
+
+   如果 pynvml 仍可被 Python 导入，请在 Python 解释器中执行以下命令找到其主文件路径：
+
+   ```Python
+   import pynvml
+   print(pynvml.__file__)
+   exit()
+   ```
+
+2. **删除文件**：
+
+   - 根据第一步获得的路径，删除 `pynvml.py` 这个主模块文件。
+   - 同时删除该路径下 `__pycache__` 文件夹内所有与 `pynvml` 相关的已编译缓存文件 (通常是 `pynvml.cpython-XX.pyc` 或类似名称)。
+
+3. 验证移除：
+
+   尝试在 Python 中重新导入 pynvml：
+
+   ```Bash
+   python -c "import pynvml"
+   ```
+
+   如果系统回报 `ModuleNotFoundError: No module named 'pynvml'`，则表示 `pynvml` 已成功移除。
+
+**⚠️ 重要提示**：手动删除 Python `site-packages` 目录中的文件应谨慎操作，此方法主要用于标准卸载流程失效的情况。具体文件路径会因您的 Python 环境（如系统Python、虚拟环境、Conda环境）而异。
 
 ## 参考资料
 
