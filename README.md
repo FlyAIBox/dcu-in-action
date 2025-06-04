@@ -46,7 +46,11 @@ DCU-in-Action 是一个面向生产环境的海光DCU加速卡完整解决方案
 | **🐳 容器化部署** | Docker/K8s生产环境部署 | ✅ 生产就绪 |
 
 ---
-
+## 📚 DCU文档
+### DCU基本介绍
+1. [国产“芯”力量：深度解析海光DCU加速卡](https://mp.weixin.qq.com/s/l8PO6bXYbV6-QaZKkdY2Iw)
+2. [善事需利器：海光DCU常用工具深度解析](https://mp.weixin.qq.com/s/5_1F7BL0OGzWcybMreHhUQ)
+---
 ## 🏗️ 项目架构
 
 ```mermaid
