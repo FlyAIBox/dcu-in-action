@@ -50,6 +50,9 @@ DCU-in-Action 是一个面向生产环境的海光DCU加速卡完整解决方案
 ### DCU基本介绍
 1. [国产“芯”力量：深度解析海光DCU加速卡](https://mp.weixin.qq.com/s/l8PO6bXYbV6-QaZKkdY2Iw)
 2. [善事需利器：海光DCU常用工具深度解析](https://mp.weixin.qq.com/s/5_1F7BL0OGzWcybMreHhUQ)
+
+### DCU大模型微调
+1. [实战 LLaMA Factory：在国产DCU上高效微调 Llama 3 模型](https://mp.weixin.qq.com/s/C5hUzbXbKbfT6GNFak01gQ)
 ---
 ## 🏗️ 项目架构
 
