@@ -1,0 +1,116 @@
+# DCU k100-AI 优化训练配置
+# 针对海光DCU k100-AI加速卡的最佳参数配置
+
+# 基础模型配置
+model_name: qwen2.5-3b-instruct
+model_path: null  # 自动下载或指定本地路径
+
+# 训练阶段和类型
+stage: sft
+do_train: true
+finetuning_type: lora
+
+# LoRA 配置 (DCU k100-AI 优化)
+lora_target: 
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+lora_rank: 32
+lora_alpha: 64
+lora_dropout: 0.05
+use_rslora: true
+
+# 数据集配置
+dataset: financial_reports
+dataset_dir: data
+template: qwen
+cutoff_len: 2048
+max_samples: 10000
+overwrite_cache: true
+preprocessing_num_workers: 8
+
+# DCU k100-AI 性能优化配置
+per_device_train_batch_size: 16     # 利用64GB大显存
+per_device_eval_batch_size: 8
+gradient_accumulation_steps: 2      # 有效batch_size = 16*2 = 32
+dataloader_num_workers: 4
+dataloader_pin_memory: true
+
+# 训练参数
+learning_rate: 2.0e-4
+weight_decay: 0.01
+lr_scheduler_type: cosine
+warmup_steps: 100
+num_train_epochs: 8
+max_grad_norm: 1.0
+
+# 混合精度和内存优化
+bf16: true                          # DCU k100-AI原生支持
+fp16: false
+gradient_checkpointing: true
+ddp_timeout: 3600
+
+# 评估和保存策略
+val_size: 0.1
+eval_strategy: steps
+eval_steps: 200
+save_strategy: steps
+save_steps: 100
+logging_steps: 10
+load_best_model_at_end: true
+metric_for_best_model: eval_loss
+greater_is_better: false
+save_total_limit: 5
+
+# 输出配置
+output_dir: saves/qwen2.5-3b-dcu-optimal
+logging_dir: logs/qwen2.5-3b-dcu-optimal
+report_to: tensorboard
+
+# DCU特定环境变量
+include_num_input_tokens_seen: true
+
+# 高级配置
+remove_unused_columns: false
+label_names: 
+  - labels
+
+# 数据处理
+max_source_length: 1024
+max_target_length: 1024
+ignore_pad_token_for_loss: true
+
+# 推理配置
+do_predict: false
+predict_with_generate: true
+generation_max_length: 2048
+generation_num_beams: 1
+generation_do_sample: true
+generation_temperature: 0.7
+generation_top_p: 0.9
+
+# 模型并行和分布式
+ddp_find_unused_parameters: false
+dataloader_persistent_workers: true
+
+# 日志和监控
+logging_first_step: true
+logging_nan_inf_filter: true
+save_safetensors: true
+
+# 可选：推送到Hub
+push_to_hub: false
+hub_model_id: null
+hub_strategy: end
+hub_token: null
+
+# 可选：回调函数
+callbacks: null
+
+# 可选：早停
+early_stopping_patience: 3
+early_stopping_threshold: 0.001 

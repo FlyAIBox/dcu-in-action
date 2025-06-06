@@ -209,7 +209,7 @@ class DCUDeviceManager:
         mock_devices = [
             {
                 "name": "海光DCU K100-AI (模拟)",
-                "total_memory": 32 * 1024 * 1024 * 1024,  # 32GB
+                "total_memory": 64 * 1024 * 1024 * 1024,  # 64GB
                 "major": 9,
                 "minor": 0,
                 "multi_processor_count": 128

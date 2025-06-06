@@ -48,11 +48,17 @@ DCU-in-Action 是一个面向生产环境的海光DCU加速卡完整解决方案
 ---
 ## 📚 DCU文档
 ### DCU基本介绍
-1. [国产“芯”力量：深度解析海光DCU加速卡](https://mp.weixin.qq.com/s/l8PO6bXYbV6-QaZKkdY2Iw)
+1. [国产"芯"力量：深度解析海光DCU加速卡](https://mp.weixin.qq.com/s/l8PO6bXYbV6-QaZKkdY2Iw)
 2. [善事需利器：海光DCU常用工具深度解析](https://mp.weixin.qq.com/s/5_1F7BL0OGzWcybMreHhUQ)
 
 ### DCU大模型微调
 1. [实战 LLaMA Factory：在国产DCU上高效微调 Llama 3 模型](https://mp.weixin.qq.com/s/C5hUzbXbKbfT6GNFak01gQ)
+2. **🚀 [DCU k100-AI专用微调指南](examples/llm-fine-tuning/llamafactory/)** - 针对海光k100-AI加速卡优化的完整大模型微调解决方案
+   - **[5分钟快速入门](examples/llm-fine-tuning/llamafactory/QUICKSTART_DCU_K100_AI.md)** - 零基础快速上手
+   - **[Easy Dataset + LLaMA Factory完整教程](examples/llm-fine-tuning/llamafactory/doc/LLaMA%20Factory：03-Easy%20Dataset%20让大模型高效学习领域知识.md)** - 从数据生成到模型微调的全流程
+   - **[DCU k100-AI优化配置](examples/llm-fine-tuning/llamafactory/configs/dcu_k100_ai_optimal.yaml)** - 性能调优参数配置
+   - **[自动环境配置脚本](examples/llm-fine-tuning/llamafactory/scripts/dcu_k100_ai_setup.sh)** - 一键配置开发环境
+   - **[性能测试工具](examples/llm-fine-tuning/llamafactory/scripts/test_dcu_performance.py)** - DCU性能基准测试
 ---
 ## 🏗️ 项目架构
 
@@ -380,6 +386,43 @@ python lora_finetune.py --model_name llama2-7b --dataset alpaca
 cd examples/llm-fine-tuning
 llamafactory-cli train --config_path configs/lora_config.yaml
 ```
+
+#### 🚀 DCU k100-AI专用微调（推荐）
+**专门针对海光DCU k100-AI优化的大模型微调方案**
+
+```bash
+# 1. 快速开始 - 一键配置DCU k100-AI环境
+cd examples/llm-fine-tuning/llamafactory
+./scripts/dcu_k100_ai_setup.sh
+
+# 2. 启动优化的Web UI界面
+~/dcu_configs/start_webui.sh
+# 访问 http://localhost:7860
+
+# 3. 使用Easy Dataset生成高质量微调数据
+# 参考详细教程：
+cat doc/LLaMA\ Factory：03-Easy\ Dataset\ 让大模型高效学习领域知识.md
+
+# 4. 命令行微调（DCU优化参数）
+llamafactory-cli train ~/dcu_configs/qwen2.5_3b_dcu.json
+
+# 5. 实时监控DCU性能
+~/dcu_configs/monitor_dcu.sh
+```
+
+**📊 DCU k100-AI性能优势**：
+- ✅ **64GB HBM2E大显存**：支持更大模型和批处理
+- ✅ **成本效益高**：提供极具竞争力的TCO
+- ✅ **生态兼容性**：完整支持PyTorch生态
+
+**📈 推荐配置**：
+| 模型规模 | 批处理大小 | LoRA Rank | 预计训练时间 |
+|----------|------------|-----------|------------|
+| Qwen2.5-3B | 8 | 32 | 20-30分钟 |
+| Qwen2.5-7B | 4 | 64 | 45-60分钟 |
+| Qwen2.5-14B | 2 | 128 | 90-120分钟 |
+
+**🔗 完整文档**：[DCU k100-AI微调指南](examples/llm-fine-tuning/llamafactory/README_DCU_K100_AI.md)
 
 ### ⚡ 推理服务
 

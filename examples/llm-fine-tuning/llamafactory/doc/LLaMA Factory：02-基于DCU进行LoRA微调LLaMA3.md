@@ -6,21 +6,23 @@
 
 | 模型名                                                       | 参数量                           | Template  |
 | ------------------------------------------------------------ | -------------------------------- | --------- |
-| [Baichuan 2](https://huggingface.co/baichuan-inc)            | 7B/13B                           | baichuan2 |
-| [ChatGLM3](https://huggingface.co/THUDM)                     | 6B                               | chatglm3  |
-| [Gemma 2](https://huggingface.co/google)                     | 2B/9B                            | gemma     |
-| [GLM-4/GLM-4-0414/GLM-Z1](https://huggingface.co/THUDM)      | 9B/32B                           | glm4      |
-| [Llama 2](https://huggingface.co/meta-llama)                 | 7B/13B/70B                       | llama2    |
-| [Llama 3/Llama 3.1](https://huggingface.co/meta-llama)       | 8B/70B                           | llama3    |
-| [Llama 4](https://huggingface.co/meta-llama)                 | 109B/402B                        | llama4    |
-| [OLMo](https://hf-mirror.com/allenai)                        | 1B/7B                            | olmo      |
+| [Baichuan 2](https://huggingface.co/baichuan-inc)               | 7B/13B                           | baichuan2 |
+| [ChatGLM3](https://huggingface.co/THUDM)                        | 6B                               | chatglm3  |
+| [Gemma 2](https://huggingface.co/google)                        | 2B/9B                            | gemma     |
+| [GLM-4/GLM-4-0414/GLM-Z1](https://huggingface.co/THUDM)         | 9B/32B                           | glm4      |
+| [Llama 2](https://huggingface.co/meta-llama)                    | 7B/13B/70B                       | llama2    |
+| [Llama 3/Llama 3.1](https://huggingface.co/meta-llama)          | 8B/70B                           | llama3    |
+| [Llama 4](https://huggingface.co/meta-llama)                    | 109B/402B                        | llama4    |
+| [OLMo](https://hf-mirror.com/allenai)                           | 1B/7B                            | olmo      |
 | [Qwen (1-2.5) (Code/Math/MoE/QwQ)](https://huggingface.co/Qwen) | 0.5B/1.5B/3B/7B/14B/32B/72B/110B | qwen      |
-| [Qwen3 (MoE)](https://huggingface.co/Qwen)                   | 0.6B/1.7B/4B/8B/14B/30B/32B/235B | qwen3     |
-| [XVERSE](https://hf-mirror.com/xverse)                       | 7B/13B                           | xverse    |
+| [Qwen3 (MoE)](https://huggingface.co/Qwen)                      | 0.6B/1.7B/4B/8B/14B/30B/32B/235B | qwen3     |
+| [XVERSE](https://hf-mirror.com/xverse)                          | 7B/13B                           | xverse    |
 
 持续更新中...
 
 > [!NOTE]
+>
+> https://mp.weixin.qq.com/s/C5hUzbXbKbfT6GNFak01gQhttps://mp.weixin.qq.com/s/C5hUzbXbKbfT6GNFak01gQ
 >
 > 注意：本版本仅支持deepseek蒸馏模型的监督微调(SFT)，可参考[deepseek-r1-distill_vllm](https://developer.sourcefind.cn/codes/modelzoo/deepseek-r1-distill_vllm)
 >
@@ -31,9 +33,9 @@
 > **已知问题及解决方案**
 >
 > 1. `Baichuan 2` 需要卸载掉环境中的xformers库，当前仅支持Lora方式训练。
-> 2. `XVERSE`在`tokenizer > 0.19`的版本下有兼容性问题报错`Exception: data did not match any variant of untagged enum PyPreTokenizerTypeWrappe`，需要使用[XVERSE-13B-256K-hf](https://huggingface.co/xverse/XVERSE-13B-256K/tree/main)中的`tokenizer_config.json.update`/`tokenizer.json.update`替换原有模型文件中的对应tokenizer文件，具体解决方法参考[xverse-ai/XVERSE-7B issues](https://github.com/xverse-ai/XVERSE-7B/issues/1)
+> 2. `XVERSE`在 `tokenizer > 0.19`的版本下有兼容性问题报错 `Exception: data did not match any variant of untagged enum PyPreTokenizerTypeWrappe`，需要使用[XVERSE-13B-256K-hf](https://huggingface.co/xverse/XVERSE-13B-256K/tree/main)中的 `tokenizer_config.json.update`/`tokenizer.json.update`替换原有模型文件中的对应tokenizer文件，具体解决方法参考[xverse-ai/XVERSE-7B issues](https://github.com/xverse-ai/XVERSE-7B/issues/1)
 > 3. `Qwen2`训练仅支持bf16格式，**fp16会出现loss为0，lr为0的问题**，参考[issues](https://github.com/hiyouga/LLaMA-Factory/issues/4848)
-> 4. `deepspeed-cpu-offload-stage3`出现`RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!`错误，是deepspeed本身bug，解决办法参考官方[issuse](https://github.com/microsoft/DeepSpeed/issues/5634)
+> 4. `deepspeed-cpu-offload-stage3`出现 `RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!`错误，是deepspeed本身bug，解决办法参考官方[issuse](https://github.com/microsoft/DeepSpeed/issues/5634)
 
 ## 如何使用
 
@@ -118,11 +120,11 @@ pdsh -V
 
 <details><summary>指令微调数据集</summary>
 <ul data-sourcepos="141:1-196:0">
-<li data-sourcepos="141:1-141:40"><a href="/codes/OpenDAS/llama-factory/-/blob/master/data/identity.json">Identity (en&amp;zh)</a></li>
+<li data-sourcepos="141:1-141:40"><a href="/codes/OpenDAS/llama-factory/-/blob/master/data/identity.json">Identity (en&zh)</a></li>
 <li data-sourcepos="142:1-142:70"><a href="https://github.com/tatsu-lab/stanford_alpaca" rel="nofollow noreferrer noopener" target="_blank">Stanford Alpaca (en)</a></li>
 <li data-sourcepos="143:1-143:73"><a href="https://github.com/ymcui/Chinese-LLaMA-Alpaca-3" rel="nofollow noreferrer noopener" target="_blank">Stanford Alpaca (zh)</a></li>
-<li data-sourcepos="144:1-144:83"><a href="https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM" rel="nofollow noreferrer noopener" target="_blank">Alpaca GPT4 (en&amp;zh)</a></li>
-<li data-sourcepos="145:1-145:107"><a href="https://huggingface.co/datasets/glaiveai/glaive-function-calling-v2" rel="nofollow noreferrer noopener" target="_blank">Glaive Function Calling V2 (en&amp;zh)</a></li>
+<li data-sourcepos="144:1-144:83"><a href="https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM" rel="nofollow noreferrer noopener" target="_blank">Alpaca GPT4 (en&zh)</a></li>
+<li data-sourcepos="145:1-145:107"><a href="https://huggingface.co/datasets/glaiveai/glaive-function-calling-v2" rel="nofollow noreferrer noopener" target="_blank">Glaive Function Calling V2 (en&zh)</a></li>
 <li data-sourcepos="146:1-146:56"><a href="https://huggingface.co/datasets/GAIR/lima" rel="nofollow noreferrer noopener" target="_blank">LIMA (en)</a></li>
 <li data-sourcepos="147:1-147:97"><a href="https://huggingface.co/datasets/JosephusCheung/GuanacoDataset" rel="nofollow noreferrer noopener" target="_blank">Guanaco Dataset (multilingual)</a></li>
 <li data-sourcepos="148:1-148:73"><a href="https://huggingface.co/datasets/BelleGroup/train_2M_CN" rel="nofollow noreferrer noopener" target="_blank">BELLE 2M (zh)</a></li>
@@ -143,10 +145,10 @@ pdsh -V
 <li data-sourcepos="163:1-163:62"><a href="https://huggingface.co/datasets/suolyer/webqa" rel="nofollow noreferrer noopener" target="_blank">Web QA (zh)</a></li>
 <li data-sourcepos="164:1-164:69"><a href="https://huggingface.co/datasets/zxbsmk/webnovel_cn" rel="nofollow noreferrer noopener" target="_blank">WebNovel (zh)</a></li>
 <li data-sourcepos="165:1-165:69"><a href="https://huggingface.co/datasets/berkeley-nest/Nectar" rel="nofollow noreferrer noopener" target="_blank">Nectar (en)</a></li>
-<li data-sourcepos="166:1-166:83"><a href="https://www.modelscope.cn/datasets/deepctrl/deepctrl-sft-data" rel="nofollow noreferrer noopener" target="_blank">deepctrl (en&amp;zh)</a></li>
+<li data-sourcepos="166:1-166:83"><a href="https://www.modelscope.cn/datasets/deepctrl/deepctrl-sft-data" rel="nofollow noreferrer noopener" target="_blank">deepctrl (en&zh)</a></li>
 <li data-sourcepos="167:1-167:83"><a href="https://huggingface.co/datasets/HasturOfficial/adgen" rel="nofollow noreferrer noopener" target="_blank">Advertise Generating (zh)</a></li>
 <li data-sourcepos="168:1-168:109"><a href="https://huggingface.co/datasets/totally-not-an-llm/sharegpt-hyperfiltered-3k" rel="nofollow noreferrer noopener" target="_blank">ShareGPT Hyperfiltered (en)</a></li>
-<li data-sourcepos="169:1-169:79"><a href="https://huggingface.co/datasets/shibing624/sharegpt_gpt4" rel="nofollow noreferrer noopener" target="_blank">ShareGPT4 (en&amp;zh)</a></li>
+<li data-sourcepos="169:1-169:79"><a href="https://huggingface.co/datasets/shibing624/sharegpt_gpt4" rel="nofollow noreferrer noopener" target="_blank">ShareGPT4 (en&zh)</a></li>
 <li data-sourcepos="170:1-170:85"><a href="https://huggingface.co/datasets/HuggingFaceH4/ultrachat_200k" rel="nofollow noreferrer noopener" target="_blank">UltraChat 200k (en)</a></li>
 <li data-sourcepos="171:1-171:75"><a href="https://huggingface.co/datasets/THUDM/AgentInstruct" rel="nofollow noreferrer noopener" target="_blank">AgentInstruct (en)</a></li>
 <li data-sourcepos="172:1-172:75"><a href="https://huggingface.co/datasets/lmsys/lmsys-chat-1m" rel="nofollow noreferrer noopener" target="_blank">LMSYS Chat 1M (en)</a></li>
@@ -158,12 +160,12 @@ pdsh -V
 <li data-sourcepos="178:1-178:104"><a href="https://huggingface.co/datasets/Magpie-Align/Magpie-Pro-300K-Filtered" rel="nofollow noreferrer noopener" target="_blank">Magpie-Pro-300K-Filtered (en)</a></li>
 <li data-sourcepos="179:1-179:85"><a href="https://huggingface.co/datasets/argilla/magpie-ultra-v0.1" rel="nofollow noreferrer noopener" target="_blank">Magpie-ultra-v0.1 (en)</a></li>
 <li data-sourcepos="180:1-180:81"><a href="https://huggingface.co/datasets/TIGER-Lab/WebInstructSub" rel="nofollow noreferrer noopener" target="_blank">WebInstructSub (en)</a></li>
-<li data-sourcepos="181:1-181:74"><a href="https://huggingface.co/datasets/O1-OPEN/OpenO1-SFT" rel="nofollow noreferrer noopener" target="_blank">OpenO1-SFT (en&amp;zh)</a></li>
+<li data-sourcepos="181:1-181:74"><a href="https://huggingface.co/datasets/O1-OPEN/OpenO1-SFT" rel="nofollow noreferrer noopener" target="_blank">OpenO1-SFT (en&zh)</a></li>
 <li data-sourcepos="182:1-182:87"><a href="https://huggingface.co/datasets/open-thoughts/OpenThoughts-114k" rel="nofollow noreferrer noopener" target="_blank">Open-Thoughts (en)</a></li>
 <li data-sourcepos="183:1-183:79"><a href="https://huggingface.co/datasets/open-r1/OpenR1-Math-220k" rel="nofollow noreferrer noopener" target="_blank">Open-R1-Math (en)</a></li>
 <li data-sourcepos="184:1-184:119"><a href="https://huggingface.co/datasets/Congliu/Chinese-DeepSeek-R1-Distill-data-110k-SFT" rel="nofollow noreferrer noopener" target="_blank">Chinese-DeepSeek-R1-Distill (zh)</a></li>
-<li data-sourcepos="185:1-185:85"><a href="https://huggingface.co/datasets/BUAADreamer/llava-en-zh-300k" rel="nofollow noreferrer noopener" target="_blank">LLaVA mixed (en&amp;zh)</a></li>
-<li data-sourcepos="186:1-186:99"><a href="https://huggingface.co/datasets/jugg1024/pokemon-gpt4o-captions" rel="nofollow noreferrer noopener" target="_blank">Pokemon-gpt4o-captions (en&amp;zh)</a></li>
+<li data-sourcepos="185:1-185:85"><a href="https://huggingface.co/datasets/BUAADreamer/llava-en-zh-300k" rel="nofollow noreferrer noopener" target="_blank">LLaVA mixed (en&zh)</a></li>
+<li data-sourcepos="186:1-186:99"><a href="https://huggingface.co/datasets/jugg1024/pokemon-gpt4o-captions" rel="nofollow noreferrer noopener" target="_blank">Pokemon-gpt4o-captions (en&zh)</a></li>
 <li data-sourcepos="187:1-187:79"><a href="https://huggingface.co/datasets/mayflowergmbh/oasst_de" rel="nofollow noreferrer noopener" target="_blank">Open Assistant (de)</a></li>
 <li data-sourcepos="188:1-188:78"><a href="https://huggingface.co/datasets/mayflowergmbh/dolly-15k_de" rel="nofollow noreferrer noopener" target="_blank">Dolly 15k (de)</a></li>
 <li data-sourcepos="189:1-189:82"><a href="https://huggingface.co/datasets/mayflowergmbh/alpaca-gpt4_de" rel="nofollow noreferrer noopener" target="_blank">Alpaca GPT4 (de)</a></li>
@@ -178,9 +180,9 @@ pdsh -V
 
 <details><summary>偏好数据集</summary>
 <ul data-sourcepos="201:1-211:0">
-<li data-sourcepos="201:1-201:76"><a href="https://huggingface.co/datasets/hiyouga/DPO-En-Zh-20k" rel="nofollow noreferrer noopener" target="_blank">DPO mixed (en&amp;zh)</a></li>
+<li data-sourcepos="201:1-201:76"><a href="https://huggingface.co/datasets/hiyouga/DPO-En-Zh-20k" rel="nofollow noreferrer noopener" target="_blank">DPO mixed (en&zh)</a></li>
 <li data-sourcepos="202:1-202:93"><a href="https://huggingface.co/datasets/HuggingFaceH4/ultrafeedback_binarized" rel="nofollow noreferrer noopener" target="_blank">UltraFeedback (en)</a></li>
-<li data-sourcepos="203:1-203:64"><a href="https://huggingface.co/datasets/m-a-p/COIG-P" rel="nofollow noreferrer noopener" target="_blank">COIG-P (en&amp;zh)</a></li>
+<li data-sourcepos="203:1-203:64"><a href="https://huggingface.co/datasets/m-a-p/COIG-P" rel="nofollow noreferrer noopener" target="_blank">COIG-P (en&zh)</a></li>
 <li data-sourcepos="204:1-204:71"><a href="https://huggingface.co/datasets/openbmb/RLHF-V-Dataset" rel="nofollow noreferrer noopener" target="_blank">RLHF-V (en)</a></li>
 <li data-sourcepos="205:1-205:70"><a href="https://huggingface.co/datasets/Zhihui/VLFeedback" rel="nofollow noreferrer noopener" target="_blank">VLFeedback (en)</a></li>
 <li data-sourcepos="206:1-206:77"><a href="https://huggingface.co/datasets/Intel/orca_dpo_pairs" rel="nofollow noreferrer noopener" target="_blank">Orca DPO Pairs (en)</a></li>
@@ -210,7 +212,7 @@ huggingface-cli login
 
 ### 快速开始
 
-下面三行命令分别对 Llama3-8B-Instruct 模型进行 LoRA **微调**、**推理**和**合并**。根据实际情况修改参数，如`model_name_or_path`/`dataset`/`template`等。
+下面三行命令分别对 Llama3-8B-Instruct 模型进行 LoRA **微调**、**推理**和**合并**。根据实际情况修改参数，如 `model_name_or_path`/`dataset`/`template`等。
 
 ```shell
 # LoRA 微调
@@ -555,11 +557,11 @@ Loading checkpoint shards: 100%|████████████████
   with torch.enable_grad(), device_autocast_ctx, torch.cpu.amp.autocast(**ctx.cpu_autocast_kwargs):  # type: ignore[attr-defined]
 /root/anaconda3/envs/dcu_llm_fine/lib/python3.10/site-packages/torch/utils/checkpoint.py:295: FutureWarning: `torch.cpu.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cpu', args...)` instead.
   with torch.enable_grad(), device_autocast_ctx, torch.cpu.amp.autocast(**ctx.cpu_autocast_kwargs):  # type: ignore[attr-defined]
-{'loss': 1.4091, 'grad_norm': 1.0385138988494873, 'learning_rate': 9.806308479691595e-05, 'epoch': 0.58}                                                                                                 
-{'loss': 1.0404, 'grad_norm': 0.6730291247367859, 'learning_rate': 7.795964517353735e-05, 'epoch': 1.17}                                                                                                 
-{'loss': 0.9658, 'grad_norm': 0.41746750473976135, 'learning_rate': 4.477357683661734e-05, 'epoch': 1.75}                                                                                                
-{'loss': 0.9389, 'grad_norm': 0.39423027634620667, 'learning_rate': 1.4033009983067452e-05, 'epoch': 2.34}                                                                                               
-{'loss': 0.894, 'grad_norm': 0.4427163302898407, 'learning_rate': 1.2179748700879012e-07, 'epoch': 2.92}                                                                                                 
+{'loss': 1.4091, 'grad_norm': 1.0385138988494873, 'learning_rate': 9.806308479691595e-05, 'epoch': 0.58}                                                                                               
+{'loss': 1.0404, 'grad_norm': 0.6730291247367859, 'learning_rate': 7.795964517353735e-05, 'epoch': 1.17}                                                                                               
+{'loss': 0.9658, 'grad_norm': 0.41746750473976135, 'learning_rate': 4.477357683661734e-05, 'epoch': 1.75}                                                                                              
+{'loss': 0.9389, 'grad_norm': 0.39423027634620667, 'learning_rate': 1.4033009983067452e-05, 'epoch': 2.34}                                                                                             
+{'loss': 0.894, 'grad_norm': 0.4427163302898407, 'learning_rate': 1.2179748700879012e-07, 'epoch': 2.92}                                                                                               
 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 51/51 [04:54<00:00,  4.38s/it][INFO|trainer.py:3705] 2025-05-27 15:22:15,098 >> Saving model checkpoint to saves/llama3-8b/lora/sft/checkpoint-51
 [INFO|configuration_utils.py:670] 2025-05-27 15:22:15,118 >> loading configuration file /root/.cache/modelscope/hub/models/LLM-Research/Meta-Llama-3-8B-Instruct/config.json
 [INFO|configuration_utils.py:739] 2025-05-27 15:22:15,119 >> Model config LlamaConfig {
@@ -599,7 +601,7 @@ Loading checkpoint shards: 100%|████████████████
 Training completed. Do not forget to share your model on huggingface.co/models =)
 
 
-{'train_runtime': 296.3281, 'train_samples_per_second': 11.045, 'train_steps_per_second': 0.172, 'train_loss': 1.0480897531789892, 'epoch': 2.98}                                                        
+{'train_runtime': 296.3281, 'train_samples_per_second': 11.045, 'train_steps_per_second': 0.172, 'train_loss': 1.0480897531789892, 'epoch': 2.98}                                                      
 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 51/51 [04:56<00:00,  5.81s/it]
 [INFO|trainer.py:3705] 2025-05-27 15:22:16,719 >> Saving model checkpoint to saves/llama3-8b/lora/sft
 I0527 15:22:16.720973 58627 ProcessGroupNCCL.cpp:1166] [PG 0 (default_pg) Rank 3] Launching ProcessGroupNCCL abort asynchrounously.
@@ -699,7 +701,7 @@ I0527 15:22:17.917193 58624 ProcessGroupNCCL.cpp:1172] [PG 0 (default_pg) Rank 0
 
 正在使用 LlamaFactory 工具，在 8 个 GPU 上对 `Meta-Llama-3-8B-Instruct` 模型进行 LoRA (Low-Rank Adaptation) 方式的监督式微调 (SFT, Supervised Fine-Tuning)。训练数据包含 `identity` 和 `alpaca_en_demo` 两个数据集，训练过程持续 3 个 epoch。
 
-------
+---
 
 按照微调流程的顺序，结合配置文件 (`llama3_lora_sft.yaml`) 和日志输出进行逐步解读。
 
@@ -864,7 +866,7 @@ I0527 15:22:17.917193 58624 ProcessGroupNCCL.cpp:1172] [PG 0 (default_pg) Rank 0
      - 评估相关配置 (`### eval`) 被注释掉。
    - **解释**: 分布式环境的 NCCL 通信器被正确关闭和清理。由于 `plot_loss: true`，训练损失曲线图被绘制并保存。因为评估相关的配置项在 `llama3_lora_sft.yaml` 中被注释掉了，所以日志提示没有评估损失和评估准确率可以绘制。
 
-------
+---
 
 **核心微调流程总结:**
 
@@ -890,7 +892,7 @@ I0527 15:22:17.917193 58624 ProcessGroupNCCL.cpp:1172] [PG 0 (default_pg) Rank 0
    - 训练完成后，保存 LoRA 适配器权重和配置文件到指定的 `output_dir`。
    - 同时保存训练日志和损失曲线图。
 
-------
+---
 
 **针对 AMD DCU 环境的建议 (如果适用且希望优化):**
 
@@ -904,6 +906,7 @@ I0527 15:22:17.917193 58624 ProcessGroupNCCL.cpp:1172] [PG 0 (default_pg) Rank 0
 ### 模型微调后推理测试
 
 配置文件
+
 ```bash
 model_name_or_path: /root/.cache/modelscope/hub/models/LLM-Research/Meta-Llama-3-8B-Instruct
 adapter_name_or_path: saves/llama3-8b/lora/sft
@@ -913,6 +916,7 @@ trust_remote_code: true
 ```
 
 输出结果
+
 ```bash
 (dcu_llm_fine) root@Ubuntu2204:~/AI-BOX/code/dcu/llama-factory# llamafactory-cli chat examples/inference/llama3_lora_sft.yaml
 [2025-05-27 17:30:16,582] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
@@ -1073,6 +1077,7 @@ Assistant: 1. 细胞理论：细胞理论是指细胞是生命的基本结构单
 2. 日心说：日心说是指地球绕太阳旋转的理论。这种理论认为，地球绕太阳旋转，而不是太阳绕地球旋转。这是由古希腊哲学家阿基米德和托勒密提出的一种理论，并且是宇宙学的基础理论之一。日心说理论的提出改变了人们对宇宙的看法，并且对科学的发展产生了很大的影响。
 
 ```
+
 好的，我们来结合您提供的推理（chat）配置文件和相应的日志输出，按照推理流程的顺序进行详细解读。
 
 **阶段一：命令执行与环境初始化 (日志时间: 17:30:16 - 17:30:20)**
@@ -1137,7 +1142,6 @@ Assistant: 1. 细胞理论：细胞理论是指细胞是生命的基本结构单
 
    - **日志**: `[INFO|2025-05-27 17:30:28] llamafactory.model.model_utils.attention:143 >> Using torch SDPA for faster training and inference.`
    - **解释**: 即使之前有关于 ROCm 环境下 SDPA 性能问题的警告，系统日志仍然表明尝试使用 SDPA 以加速推理。
-
 2. **加载并合并 LoRA 适配器**:
 
    - 日志
@@ -1145,12 +1149,10 @@ Assistant: 1. 细胞理论：细胞理论是指细胞是生命的基本结构单
      - `[INFO|2025-05-27 17:31:18] llamafactory.model.adapter:143 >> Merged 1 adapter(s).`
      - `[INFO|2025-05-27 17:31:18] llamafactory.model.adapter:143 >> Loaded adapter(s): saves/llama3-8b/lora/sft`
      - `[INFO|2025-05-27 17:31:18] llamafactory.model.loader:143 >> all params: 8,030,261,248`
-
    - **配置文件关联**: `adapter_name_or_path: saves/llama3-8b/lora/sft`
-
    - 解释: 这是推理流程的关键步骤之一。系统从配置文件中 `adapter_name_or_path`
 
-      指定的路径 (`saves/llama3-8b/lora/sft`，即您微调后保存 LoRA 权重的位置) 加载了之前训练好的 LoRA 适配器。日志显示“Merged 1 adapter(s)”，**这意味着 LoRA 权重被加载并与基础模型的权重合并（或以某种方式动态应用，取决于 LlamaFactory 的具体实现）。**
+     指定的路径 (`saves/llama3-8b/lora/sft`，即您微调后保存 LoRA 权重的位置) 加载了之前训练好的 LoRA 适配器。日志显示“Merged 1 adapter(s)”，**这意味着 LoRA 权重被加载并与基础模型的权重合并（或以某种方式动态应用，取决于 LlamaFactory 的具体实现）。**
 
      - 注意参数量的变化：训练时可训练 LoRA 参数约为 2097万，基础模型约 80.3 亿，总参数 `8,051,232,768`。推理时加载适配器后，显示的 `all params: 8,030,261,248` 与基础模型参数量几乎一致。这通常意味着 LoRA 权重已经有效地融入了模型中，或者在推理时，参数计数主要反映基础模型。如果 LoRA 权重被完全合并到原权重矩阵中，总参数量不会显著增加。
 
@@ -1175,7 +1177,7 @@ Assistant: 1. 细胞理论：细胞理论是指细胞是生命的基本结构单
      - 日心说: `...由古希腊哲学家阿基米德和托勒密提出的一种理论...` (不准确，日心说的早期提出者有古希腊的阿里斯塔克斯，哥白尼在文艺复兴时期系统阐述，托勒密主张地心说，阿基米德主要贡献在物理和数学。)
      - **分析**: 模型对科学理论的解释存在事实性错误，混合了正确和不正确的信息。这可能表明微调数据并未充分覆盖这类知识的精确性，或者模型在处理这类具体事实时仍有不足。
 
-------
+---
 
 **总结**
 
@@ -1194,6 +1196,7 @@ Assistant: 1. 细胞理论：细胞理论是指细胞是生命的基本结构单
 ### 导出模型
 
 配置文件
+
 ```bash
 ### Note: DO NOT use quantized model or quantization_bit when merging lora adapters
 
@@ -1211,6 +1214,7 @@ export_legacy_format: false
 ```
 
 输出结果
+
 ```bash
 (dcu_llm_fine) root@Ubuntu2204:~/AI-BOX/code/dcu/llama-factory# llamafactory-cli export examples/merge_lora/llama3_lora_sft.yaml
 [2025-05-27 18:06:54,373] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
@@ -1445,7 +1449,7 @@ If your task is similar to the task the model of the checkpoint was trained on, 
 
   - **解释**: 这是一个非常重要的提示。**在合并 LoRA 适配器时，基础模型应该是全精度（如 float32、bfloat16 或 float16）的。如果基础模型在合并前已经被量化（例如，转换为 INT8 或 INT4），那么合并 LoRA 权重可能会导致严重的精度损失，或者合并操作在数学上变得不正确。**量化通常是在模型合并完成后，作为一个独立的、可选的步骤进行的，目的是进一步减小模型大小和加速推理。
 
-------
+---
 
 **总结**
 
@@ -1460,7 +1464,7 @@ If your task is similar to the task the model of the checkpoint was trained on, 
 
 ## 常见问题
 
-------
+---
 
 ### 1. 微调 Llama3-8B 启动异常：`NameError: name 'amdsmi' is not defined`
 
@@ -1479,7 +1483,7 @@ If your task is similar to the task the model of the checkpoint was trained on, 
 
 错误发生在尝试初始化 `amdsmi` 时。这是什么原因导致的，以及你是如何解决的？
 
-------
+---
 
 **错误信息 (Error Message):**
 
@@ -1494,7 +1498,7 @@ NameError: name 'amdsmi' is not defined
 
 该错误发生在 PyTorch 的 `torch/cuda/__init__.py` 文件中的 `_raw_device_count_amdsmi` 函数内部，当代码尝试调用 `amdsmi.amdsmi_init()` 时。
 
-------
+---
 
 **原因分析 (Cause Analysis):**
 
@@ -1505,10 +1509,10 @@ NameError: name 'amdsmi' is not defined
 1. amdsmi Python 包缺失或未正确安装:
 
    在你的 Conda 环境 dcu_llm_fine 中，可能没有安装 amdsmi 相关的 Python 包。PyTorch 在其 ROCm (HIP) 后端会尝试使用 AMDSMI (AMD System Management Interface) 来获取 AMD GPU 的信息。如果导入 amdsmi 失败（即使这个导入操作被一个 try-except ModuleNotFoundError 块包裹且静默处理了），后续代码若直接尝试使用 amdsmi 变量，就会引发 NameError。
-
 2. **PyTorch 内部逻辑缺陷**:
 
    > /root/anaconda3/envs/dcu_llm_fine/lib/python3.10/site-packages/torch/cuda/__init__.py
+   >
 
    ```python
    try:
@@ -1524,7 +1528,7 @@ NameError: name 'amdsmi' is not defined
        except ModuleNotFoundError:
            # 第62行：则什么也不做 (pass)
            pass # pynvml 未找到
-   
+
        # 第63行
        try:
            # 第64行：尝试导入 amdsmi 库
@@ -1541,14 +1545,10 @@ NameError: name 'amdsmi' is not defined
    ```
 
    - 可以看到，PyTorch 在尝试导入 `amdsmi` 模块后，错误地将 `_HAS_PYNVML` 标志设置为 `True`（`_HAS_PYNVML = True`），而不是一个专门针对 `amdsmi` 可用性的标志（例如，本应是 `_HAS_AMDSMI = True`）。这是一个明显的笔误。
-
-     
-
    - 在出错的 `_raw_device_count_amdsmi` 函数中，存在一个条件检查 `if not _HAS_PYNVML:`。这个检查本身可能就是不恰当的，因为它似乎是基于 PYNVML (NVIDIA 的管理库) 的可用性来决定是否执行 AMDSMI (AMD 的管理库) 相关的代码。
-
    - 如果 `_HAS_PYNVML` 标志由于某种原因（例如，系统中安装了 PYNVML，或者由于上述笔误在导入 `amdsmi` 后被错误地设为 `True`）为 `True`，那么 `if not _HAS_PYNVML:` 这个条件就会为假，代码会继续执行到 `amdsmi.amdsmi_init()`。但此时，如果 `amdsmi` 模块之前并未被成功导入并加载到全局命名空间（例如，因为 `amdsmi` 包未安装），那么 `NameError` 就会发生。
 
-------
+---
 
 **解决方案 1:**
 
@@ -1577,9 +1577,9 @@ def _raw_device_count_amdsmi() -> int:
 
 **解决方案 2:**
 
-卸载虚拟环境和物理环境中的`amdsmi`和`pynvml`
+卸载虚拟环境和物理环境中的 `amdsmi`和 `pynvml`
 
-------
+---
 
 **问：如果 `pynvml` 无法通过 `pip` 正常卸载或卸载不干净，应如何手动彻底清除？**
 
@@ -1594,12 +1594,10 @@ def _raw_device_count_amdsmi() -> int:
    print(pynvml.__file__)
    exit()
    ```
-
 2. **删除文件**：
 
    - 根据第一步获得的路径，删除 `pynvml.py` 这个主模块文件。
    - 同时删除该路径下 `__pycache__` 文件夹内所有与 `pynvml` 相关的已编译缓存文件 (通常是 `pynvml.cpython-XX.pyc` 或类似名称)。
-
 3. 验证移除：
 
    尝试在 Python 中重新导入 pynvml：
@@ -1616,6 +1614,3 @@ def _raw_device_count_amdsmi() -> int:
 
 - [README_zh]()
 - [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory)
-
-
-
