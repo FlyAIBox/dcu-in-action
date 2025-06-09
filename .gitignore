@@ -331,3 +331,13 @@ yarn-error.log*
 #TEST
 test_config.yaml
 dcu_environment_report*
+common/__pycache__/
+common/utils/__pycache__/
+common/dcu/__pycache__/
+common/dcu/utils/__pycache__/
+common/dcu/models/__pycache__/
+common/dcu/datasets/__pycache__/
+common/dcu/metrics/__pycache__/
+common/dcu/metrics/utils/__pycache__/
+common/dcu/metrics/metrics/__pycache__/
+common/dcu/metrics/metrics/utils/__pycache__/
