@@ -146,9 +146,9 @@ create_table() {
 get_dcu_model() {
     echo -e "${CYAN}=== DCU型号信息 ===${CLEAR}"
     
-    # 使用 --showhw 获取信息
+    # 使用 --showhw --showallinfo 获取信息
     local smi_output
-    smi_output=$($ROCM_SMI --showhw 2>/dev/null)
+    smi_output=$($ROCM_SMI --showhw --showallinfo 2>/dev/null)
     
     if [ -z "$smi_output" ]; then
         echo "无法获取DCU型号信息。"
@@ -159,31 +159,42 @@ get_dcu_model() {
         echo "ID|厂商|型号"
         echo "--|--|--"
         echo "$smi_output" | awk '
-        /GPU\[[0-9]+\]/ || /HCU\[[0-9]+\]/ {
-            if (current_id != "") {
-                # In case a card entry ends
-                if (vendor == "") vendor = "N/A"
-                if (model == "") model = "N/A"
-                printf "%s|%s|%s\n", current_id, vendor, model
-            }
+        /HCU\[[0-9]+\]/ || /GPU\[[0-9]+\]/ {
             current_id = $1
-            sub(/:/, "", current_id)
-            vendor = ""
-            model = ""
-        }
-        /Card series/ {
-            sub(/.*Card series:[[:space:]]*/, "")
-            model = $0
-        }
-        /Card vendor/ {
-            sub(/.*Card vendor:[[:space:]]*/, "")
-            vendor = $0
+            if ($0 ~ /Card Vendor/) {
+                sub(/.*Card Vendor:[[:space:]]*/, "")
+                vendors[current_id] = $0
+            }
+            if ($0 ~ /Card Series/) {
+                sub(/.*Card Series:[[:space:]]*/, "")
+                models[current_id] = $0
+            }
         }
         END {
-            if (current_id != "") {
-                if (vendor == "") vendor = "N/A"
-                if (model == "") model = "N/A"
-                printf "%s|%s|%s\n", current_id, vendor, model
+            # Collect all keys and sort them to ensure ordered output
+            for (k in models) keys[k] = 1
+            for (k in vendors) keys[k] = 1
+            
+            # Create a temporary array for sorting
+            i = 0
+            for (k in keys) sorted_keys[i++] = k
+            
+            # Basic bubble sort for keys (since awk sort is not standard)
+            for (j = 0; j < i - 1; j++) {
+                for (l = 0; l < i - j - 1; l++) {
+                    split(sorted_keys[l], a, "[[]|[]]")
+                    split(sorted_keys[l+1], b, "[[]|[]]")
+                    if (a[2] > b[2]) {
+                        temp = sorted_keys[l]
+                        sorted_keys[l] = sorted_keys[l+1]
+                        sorted_keys[l+1] = temp
+                    }
+                }
+            }
+            
+            for (j = 0; j < i; j++) {
+                key_name = sorted_keys[j]
+                print key_name "|" (vendors[key_name] ? vendors[key_name] : "N/A") "|" (models[key_name] ? models[key_name] : "N/A")
             }
         }'
     ) | create_table
@@ -414,67 +425,134 @@ get_dcu_summary() {
         echo -e "${CYAN}=== DCU汇总信息 ===${CLEAR}"
         
         # Gather all data
-        local model_info=$($ROCM_SMI --showhw 2>/dev/null)
-        local mem_info=$($ROCM_SMI --showmeminfo vram 2>/dev/null)
-        local util_info=$($ROCM_SMI 2>/dev/null)
+        local model_info
+        model_info=$($ROCM_SMI --showhw --showallinfo 2>/dev/null)
+        local mem_info
+        mem_info=$($ROCM_SMI --showmeminfo vram 2>/dev/null)
+        local util_info
+        util_info=$($ROCM_SMI 2>/dev/null)
+        local clocks_info
+        clocks_info=$($ROCM_SMI --showclocks 2>/dev/null)
+        local pids_info
+        pids_info=$($ROCM_SMI --showpids 2>/dev/null)
         
         (
-            echo "设备|型号|显存总量(MiB)|已用显存(MiB)|使用率(%)|温度(°C)|GPU使用率(%)"
+            echo "设备|型号|显存(已用/总量 MiB)|显存使用率(%)|温度(°C)|理论带宽(GB/s)|进程信息(PID:名称)"
             echo "--|--|--|--|--|--|--"
 
-            # Combine data using awk
-            awk -v model_info="$model_info" -v mem_info="$mem_info" -v util_info="$util_info" '
+            # Combine data using a more robust awk script
+            awk -v model_info="$model_info" \
+                -v mem_info="$mem_info" \
+                -v util_info="$util_info" \
+                -v clocks_info="$clocks_info" \
+                -v pids_info="$pids_info" '
+            function trim(s) { sub(/^[ \t\r\n]+/, "", s); sub(/[ \t\r\n]+$/, "", s); return s }
             BEGIN {
                 # Parse model info
                 split(model_info, lines, "\n")
                 for (i in lines) {
-                    if (lines[i] ~ /GPU\[[0-9]+\]/ || lines[i] ~ /HCU\[[0-9]+\]/) {
-                        id = lines[i]; sub(/:.*/, "", id)
-                    }
-                    if (lines[i] ~ /Card series/) {
-                        model = lines[i]; sub(/.*Card series:[ ]*/, "", model)
-                        models[id] = model
+                    if (match(lines[i], /HCU\[[0-9]+\]|GPU\[[0-9]+\]/)) {
+                        id = substr(lines[i], RSTART, RLENGTH)
+                        if (lines[i] ~ /Card Series/) {
+                            sub(/.*Card Series:[ ]*/, "", lines[i])
+                            models[id] = trim(lines[i])
+                        }
                     }
                 }
 
                 # Parse memory info
                 split(mem_info, lines, "\n")
                 for (i in lines) {
-                    if (lines[i] ~ /GPU\[[0-9]+\]/ || lines[i] ~ /HCU\[[0-9]+\]/) {
-                        id = lines[i]; sub(/:.*/, "", id)
-                    }
-                    if (lines[i] ~ /vram Total Memory/) {
-                        total_mem[id] = $NF
-                    }
-                    if (lines[i] ~ /vram Total Used Memory/) {
-                        used_mem[id] = $NF
+                     if (match(lines[i], /HCU\[[0-9]+\]|GPU\[[0-9]+\]/)) {
+                        id = substr(lines[i], RSTART, RLENGTH)
+                        if (lines[i] ~ /vram Total Memory/) {
+                            n = split(lines[i], f); total_mem[id] = f[n]
+                        }
+                        if (lines[i] ~ /vram Total Used Memory/) {
+                            n = split(lines[i], f); used_mem[id] = f[n]
+                        }
                     }
                 }
 
-                # Parse utilization info
+                # Parse utilization info for Temperature
                 split(util_info, lines, "\n")
                 for (i in lines) {
-                    if (lines[i] ~ /^[0-9]/ && NF > 5) {
-                        id = "HCU[" $1 "]"
-                        temps[id] = $2; sub(/C/, "", temps[id])
-                        gpu_usages[id] = $7; sub(/%/, "", gpu_usages[id])
+                    if (lines[i] ~ /^[0-9]/ && split(lines[i], f, /[[:space:]]+/) > 5) {
+                        id = "HCU[" f[1] "]"
+                        temp = f[2]; sub(/C/, "", temp)
+                        temps[id] = temp
                     }
                 }
 
+                # Parse clocks info for bandwidth
+                split(clocks_info, lines, "\n")
+                for (i in lines) {
+                    if (match(lines[i], /HCU\[[0-9]+\]|GPU\[[0-9]+\]/)) {
+                        id = substr(lines[i], RSTART, RLENGTH)
+                        if (lines[i] ~ /mclk/ && match(lines[i], /[0-9]+Mhz/)) {
+                            clock_mhz = substr(lines[i], RSTART, RLENGTH-3)
+                            bit_width = 4096; multiplier = 2;
+                            bandwidths[id] = (clock_mhz * multiplier * bit_width / 8) / 1000
+                        }
+                    }
+                }
+
+                # Parse PIDs info
+                current_id = ""
+                current_pid = ""
+                split(pids_info, lines, "\n")
+                for (i in lines) {
+                     if (match(lines[i], /HCU\[[0-9]+\]|GPU\[[0-9]+\]/)) {
+                        current_id = substr(lines[i], RSTART, RLENGTH)
+                        processes[current_id] = "无" # Default value
+                    }
+                    if (lines[i] ~ /Process ID:/) {
+                        sub(/.*Process ID:[ ]*/, "", lines[i]); current_pid = trim(lines[i])
+                    }
+                    if (lines[i] ~ /Process Name:/) {
+                        sub(/.*Process Name:[ ]*/, "", lines[i]); proc_name = trim(lines[i])
+                        if (processes[current_id] == "无") {
+                           processes[current_id] = "" # Clear default
+                        }
+                        if (processes[current_id] != "") {
+                            processes[current_id] = processes[current_id] ","
+                        }
+                        processes[current_id] = processes[current_id] current_pid ":" proc_name
+                    }
+                }
+
+                # Create a sorted list of keys
+                for (k in models) keys[k] = 1
+                
+                i = 0
+                for (k in keys) sorted_keys[i++] = k
+                
+                for (j = 0; j < i - 1; j++) {
+                    for (l = 0; l < i - j - 1; l++) {
+                        split(sorted_keys[l], a, "[[]|[]]")
+                        split(sorted_keys[l+1], b, "[[]|[]]")
+                        if (a[2]+0 > b[2]+0) {
+                            temp = sorted_keys[l]; sorted_keys[l] = sorted_keys[l+1]; sorted_keys[l+1] = temp
+                        }
+                    }
+                }
+                
                 # Print combined table
-                for (id in models) {
+                for (j=0; j<i; j++) {
+                    id = sorted_keys[j]
                     mem_usage = 0
                     if (total_mem[id] > 0) {
                         mem_usage = (used_mem[id] / total_mem[id]) * 100
                     }
-                    printf "%s|%s|%d|%d|%.2f|%s|%s\n",
+                    printf "%s|%s|%d/%d|%.2f|%s|%.2f|%s\n",
                         id,
                         models[id] ? models[id] : "N/A",
-                        total_mem[id] ? total_mem[id] : 0,
                         used_mem[id] ? used_mem[id] : 0,
+                        total_mem[id] ? total_mem[id] : 0,
                         mem_usage,
                         temps[id] ? temps[id] : "N/A",
-                        gpu_usages[id] ? gpu_usages[id] : "N/A"
+                        bandwidths[id] ? bandwidths[id] : 0.00,
+                        processes[id] ? processes[id] : "无"
                 }
             }'
         ) | create_table
