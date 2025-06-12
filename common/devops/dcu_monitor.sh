@@ -1,620 +1,360 @@
 #!/bin/bash
 
 # DCU监控脚本 - 实时显示DCU加速卡使用情况
+#
 # 功能:
-#   - 显示DCU型号
-#   - 显存使用情况(已用/总容量)
-#   - 使用率
-#   - 温度
-#   - 显存带宽
-#   - 卡间互联带宽(可选)
-#   - 应用进程信息
-#   - 模型微调进度监控
-#   - 汇总信息
+# - 以美观的表格形式显示DCU状态
+# - 包含型号、显存、温度、显存带宽、进程信息等
+# - 支持单次运行和持续监控模式
+# - 可选的耗时操作（如卡间带宽测试）
 
-# 颜色定义
+# --- 颜色定义 ---
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-CYAN='\033[0;36m'
-CLEAR='\033[0m'
+CYAN='\033[0;34m'
+NC='\033[0m' # No Color
 
-# 设置默认值
-SHOW_INTERCONNECT=false
-INTERVAL=2
-MODEL_DIR=""
-LOG_DIR=""
-VERBOSE=false
-SHOW_SUMMARY=true
+# --- 默认值 ---
 WATCH_MODE=false
+INTERVAL=2
+RUN_INTERCONNECT_TEST=false
 
-# 设置ROCm工具路径
-ROCM_PATH="/opt/dtk-25.04/bin"
-ROCM_SMI="${ROCM_PATH}/rocm-smi"
-ROCM_BANDWIDTH_TEST="${ROCM_PATH}/rocm-bandwidth-test"
+# --- 工具路径 ---
+# 优先使用环境变量 $ROCM_PATH, 否则使用默认值
+ROCM_PATH=${ROCM_PATH:-/opt/dtk-25.04}
+ROCM_SMI="${ROCM_PATH}/bin/rocm-smi"
+ROCM_BANDWIDTH_TEST="${ROCM_PATH}/bin/rocm-bandwidth-test"
 
-# 帮助信息
+
+# --- 帮助信息 ---
 show_help() {
-    echo -e "${CYAN}DCU Monitor - 监控DCU加速卡使用情况${CLEAR}"
+    echo -e "${CYAN}DCU 监控面板 - v2.1${NC}"
+    echo "一个用于监控和显示DCU状态的增强脚本。"
+    echo
     echo "用法: $0 [选项]"
     echo
     echo "选项:"
-    echo "  -w, --watch               启动持续监控模式 (默认: 单次运行)"
-    echo "  -t, --time SECONDS        刷新时间间隔(仅在-w模式下有效，默认: 2秒)"
-    echo "  -i, --interconnect        显示卡间互联带宽信息"
-    echo "  -m, --model-dir DIR       模型训练目录，用于监控微调进度"
-    echo "  -l, --log-dir DIR         日志目录，用于解析模型训练进度"
-    echo "  -v, --verbose             显示详细信息"
-    echo "  -s, --summary             显示汇总信息表格(默认: 开启)"
-    echo "  -n, --no-summary          不显示汇总信息表格"
-    echo "  -h, --help                显示此帮助信息"
+    echo "  -w, --watch          启动持续监控模式 (默认: 单次运行)"
+    echo "  -t, --time SEC       刷新时间间隔 (仅在 -w 模式下有效, 默认: 2秒)"
+    echo "  -i, --interconnect   运行并显示卡间互联带宽测试 (耗时较长，会增加一列)"
+    echo "  -h, --help           显示此帮助信息"
     echo
     echo "示例:"
-    echo "  $0                        运行一次并显示所有信息"
-    echo "  $0 -w -t 5                每5秒刷新一次监控信息"
-    echo "  $0 -i                     运行一次，并显示卡间互联带宽"
-    echo "  $0 -m /path/to/model      监控指定目录下的模型训练进度"
-    echo "  $0 -n                     不显示汇总信息表格"
-    echo
+    echo "  $0                   # 运行一次，显示基本信息"
+    echo "  $0 -w -t 5           # 每5秒刷新一次基本信息"
+    echo "  $0 -i                # 运行一次，包含卡间带宽测试"
     exit 0
 }
 
-# 处理命令行参数
+# --- 参数处理 ---
 while [ $# -gt 0 ]; do
-    case $1 in
+    case "$1" in
         -w|--watch)
             WATCH_MODE=true
             shift
             ;;
-        -i|--interconnect)
-            SHOW_INTERCONNECT=true
-            shift
-            ;;
         -t|--time)
-            INTERVAL="$2"
-            shift 2
+            if [[ "$2" =~ ^[0-9]+$ ]]; then
+                INTERVAL="$2"
+                shift 2
+            else
+                echo -e "${RED}错误: -t/--time 需要一个有效的秒数。${NC}" >&2
+                exit 1
+            fi
             ;;
-        -m|--model-dir)
-            MODEL_DIR="$2"
-            shift 2
-            ;;
-        -l|--log-dir)
-            LOG_DIR="$2"
-            shift 2
-            ;;
-        -v|--verbose)
-            VERBOSE=true
-            shift
-            ;;
-        -s|--summary)
-            SHOW_SUMMARY=true
-            shift
-            ;;
-        -n|--no-summary)
-            SHOW_SUMMARY=false
+        -i|--interconnect)
+            RUN_INTERCONNECT_TEST=true
             shift
             ;;
         -h|--help)
             show_help
             ;;
         *)
-            echo "未知选项: $1"
+            echo -e "${RED}未知选项: $1${NC}" >&2
             show_help
             ;;
     esac
 done
 
-# 检查必要命令是否存在
+# --- 检查依赖 ---
 check_requirements() {
-    if [ ! -x "$ROCM_SMI" ]; then
-        echo -e "${RED}错误: rocm-smi 未找到。请确保ROCm已正确安装或调整ROCM_PATH路径。${CLEAR}"
-        echo "当前设置的路径为: $ROCM_SMI"
-        echo "尝试使用 'command -v rocm-smi' 查找正确路径"
+    if ! command -v "$ROCM_SMI" &> /dev/null; then
+        echo -e "${RED}错误: rocm-smi 未在 '$ROCM_SMI' 找到。${NC}" >&2
+        echo "请确保ROCm已正确安装，或设置正确的 \$ROCM_PATH 环境变量。" >&2
         exit 1
     fi
-    
-    if [ "$SHOW_INTERCONNECT" = "true" ] && [ ! -x "$ROCM_BANDWIDTH_TEST" ]; then
-        echo -e "${YELLOW}警告: rocm-bandwidth-test 未找到。卡间互联带宽功能将不可用。${CLEAR}"
-        echo "当前设置的路径为: $ROCM_BANDWIDTH_TEST"
-        SHOW_INTERCONNECT=false
-    fi
-
-    if ! command -v column &> /dev/null; then
-        echo -e "${YELLOW}警告: column 命令未找到，表格显示可能不美观。${CLEAR}"
-        echo "请安装 util-linux 包以获得更好的表格显示效果。"
-    fi
-    
-    if ! command -v awk &> /dev/null; then
-        echo -e "${RED}错误: awk 命令未找到。该脚本需要 awk 才能运行。${CLEAR}"
-        exit 1
+    if "$RUN_INTERCONNECT_TEST" && ! command -v "$ROCM_BANDWIDTH_TEST" &> /dev/null; then
+        echo -e "${YELLOW}警告: rocm-bandwidth-test 未在 '$ROCM_BANDWIDTH_TEST' 找到。${NC}" >&2
+        echo "将跳过卡间互联带宽测试。" >&2
+        RUN_INTERCONNECT_TEST=false
     fi
 }
 
-# 创建表格函数
-create_table() {
-    if command -v column &> /dev/null; then
-        column -t -s "|" -o " | "
-    else
-        # Fallback to simple formatting if column is not available
-        sed 's/|/\t/g'
-    fi
+# --- 数据采集模块 ---
+declare -A gpus # 使用关联数组存储所有GPU数据
+
+get_gpu_list() {
+    mapfile -t gpu_ids < <("$ROCM_SMI" -i | grep -o 'HCU\[[0-9]\+\]' | sort -u)
+    for id in "${gpu_ids[@]}"; do
+        gpus["$id,name"]="$id"
+    done
 }
 
-# 获取DCU型号信息
-get_dcu_model() {
-    echo -e "${CYAN}=== DCU型号信息 ===${CLEAR}"
-    
-    # 使用 --showhw --showallinfo 获取信息
+get_base_info() {
     local smi_output
-    smi_output=$($ROCM_SMI --showhw --showallinfo 2>/dev/null)
-    
-    if [ -z "$smi_output" ]; then
-        echo "无法获取DCU型号信息。"
-        return
-    fi
-    
-    (
-        echo "ID|厂商|型号"
-        echo "--|--|--"
-        echo "$smi_output" | awk '
-        /HCU\[[0-9]+\]/ || /GPU\[[0-9]+\]/ {
-            current_id = $1
-            if ($0 ~ /Card Vendor/) {
-                sub(/.*Card Vendor:[[:space:]]*/, "")
-                vendors[current_id] = $0
-            }
-            if ($0 ~ /Card Series/) {
-                sub(/.*Card Series:[[:space:]]*/, "")
-                models[current_id] = $0
-            }
-        }
-        END {
-            # Collect all keys and sort them to ensure ordered output
-            for (k in models) keys[k] = 1
-            for (k in vendors) keys[k] = 1
-            
-            # Create a temporary array for sorting
-            i = 0
-            for (k in keys) sorted_keys[i++] = k
-            
-            # Basic bubble sort for keys (since awk sort is not standard)
-            for (j = 0; j < i - 1; j++) {
-                for (l = 0; l < i - j - 1; l++) {
-                    split(sorted_keys[l], a, "[[]|[]]")
-                    split(sorted_keys[l+1], b, "[[]|[]]")
-                    if (a[2] > b[2]) {
-                        temp = sorted_keys[l]
-                        sorted_keys[l] = sorted_keys[l+1]
-                        sorted_keys[l+1] = temp
-                    }
-                }
-            }
-            
-            for (j = 0; j < i; j++) {
-                key_name = sorted_keys[j]
-                print key_name "|" (vendors[key_name] ? vendors[key_name] : "N/A") "|" (models[key_name] ? models[key_name] : "N/A")
-            }
-        }'
-    ) | create_table
-    echo
-}
-
-# 获取显存使用情况
-get_memory_usage() {
-    echo -e "${CYAN}=== 显存使用情况 ===${CLEAR}"
-    
-    local smi_output
-    smi_output=$($ROCM_SMI --showmeminfo vram 2>/dev/null)
-
-    if [ -z "$smi_output" ]; then
-        echo "无法获取显存信息。"
-        return
-    fi
-
-    (
-        echo "设备|总显存(MiB)|已用显存(MiB)|使用率(%)"
-        echo "--|--|--|--"
-        echo "$smi_output" | awk '
-        /GPU\[[0-9]+\]/ || /HCU\[[0-9]+\]/ {
-            dev = $1
-            sub(/:/, "", dev)
-        }
-        /vram Total Memory/ {
-            total[dev] = $NF
-        }
-        /vram Total Used Memory/ {
-            used[dev] = $NF
-        }
-        END {
-            total_all = 0
-            used_all = 0
-            for (d in total) {
-                usage = 0
-                if (total[d] > 0) {
-                    usage = (used[d] / total[d]) * 100
-                }
-                printf "%s|%d|%d|%.2f\n", d, total[d], used[d], usage
-                total_all += total[d]
-                used_all += used[d]
-            }
-            if (total_all > 0) {
-                usage_all = (used_all / total_all) * 100
-                printf "总计|%d|%d|%.2f\n", total_all, used_all, usage_all
-            }
-        }'
-    ) | create_table
-    echo
-}
-
-# 获取DCU温度和使用率
-get_temp_and_util() {
-    echo -e "${CYAN}=== DCU温度和使用率 ===${CLEAR}"
-
-    local smi_output
-    smi_output=$($ROCM_SMI 2>/dev/null)
-
-    if [ -z "$smi_output" ] || ! echo "$smi_output" | grep -q "Temp"; then
-        echo "无法获取温度和使用率信息。"
-        return
-    fi
-    
-    (
-        echo "设备|温度(°C)|GPU使用率(%)"
-        echo "--|--|--"
-        # Skip header and footer lines of rocm-smi output
-        echo "$smi_output" | awk '
-        /Perf/ && /PwrCap/ {next} # Skip header
-        /=/ {next} # Skip separators
-        NF > 5 && ($1 ~ /^[0-9]+$/) {
-            dev_id = "HCU[" $1 "]"
-            temp = $2
-            sub(/C/, "", temp)
-            gpu_use = $7
-            sub(/%/, "", gpu_use)
-            printf "%s|%s|%s\n", dev_id, temp, gpu_use
-        }'
-    ) | create_table
-    echo
-}
-
-# 计算显存带宽
-get_memory_bandwidth() {
-    echo -e "${CYAN}=== 显存带宽 ===${CLEAR}"
-    
-    local smi_output
-    smi_output=$($ROCM_SMI --showclocks 2>/dev/null)
-
-    if [ -z "$smi_output" ]; then
-        echo "无法获取时钟频率信息。"
-        return
-    fi
-
-    (
-        echo "设备|时钟频率(MHz)|理论峰值带宽(GB/s)"
-        echo "--|--|--"
-        echo "$smi_output" | awk '
-        /mclk/ {
-            gpu_id = "";
-            if (match($0, /GPU\[[0-9]*\]/)) {
-                gpu_id = substr($0, RSTART, RLENGTH)
-            } else if (match($0, /HCU\[[0-9]*\]/)) {
-                gpu_id = substr($0, RSTART, RLENGTH)
-            }
-            
-            if (match($0, /[0-9]+Mhz/)) {
-                clock_mhz = substr($0, RSTART, RLENGTH-3)
-                
-                # Bandwidth calculation (assuming HBM2, 4096-bit width)
-                bit_width = 4096
-                multiplier = 2  # DDR
-                bandwidth = (clock_mhz * multiplier * bit_width / 8) / 1000
-                
-                printf "%s|%s|%.2f\n", gpu_id, clock_mhz, bandwidth
-            }
-        }'
-    ) | create_table
-    
-    echo -e "\n注意: 理论带宽计算基于默认内存规格(位宽4096bit)，请根据实际DCU型号调整"
-    echo
-}
-
-# 获取卡间互联带宽(可选)
-get_interconnect_bandwidth() {
-    if [ "$SHOW_INTERCONNECT" = "true" ]; then
-        echo -e "${CYAN}=== 卡间互联带宽 ===${CLEAR}"
-        echo "正在测试卡间带宽，这可能需要几分钟..."
-        
-        local bandwidth_output
-        bandwidth_output=$($ROCM_BANDWIDTH_TEST 2>/dev/null)
-
-        if [ -z "$bandwidth_output" ]; then
-            echo "无法获取带宽测试结果。"
-            return
+    smi_output=$("$ROCM_SMI")
+    while read -r line; do
+        if [[ $line =~ ^[0-9]+[[:space:]] ]]; then
+            local id="HCU[$(echo "$line" | awk '{print $1}')]"
+            gpus["$id,temp"]=$(echo "$line" | awk '{print $2}')
+            gpus["$id,util"]=$(echo "$line" | awk '{print $7}')
         fi
+    done <<< "$smi_output"
 
-        (
-            echo "$bandwidth_output" | awk '/D2D Bandwidth Matrix/ {p=1; next} /^[^0-9]/ {if(p) exit} p' | head -n 20
-        ) | sed 's/^[ \t]*//' | awk 'NF > 0' | create_table
-        
-        echo
-    fi
-}
-
-# 获取应用进程信息
-get_process_info() {
-    echo -e "${CYAN}=== DCU应用进程 ===${CLEAR}"
-    
-    local pids_output
-    pids_output=$($ROCM_SMI --showpids 2>/dev/null)
-
-    if [ -z "$pids_output" ] || ! echo "$pids_output" | grep -q "Process ID"; then
-        echo "无正在运行的DCU进程"
-        echo
-        return
-    fi
-
-    (
-        echo "设备|进程ID|GPU内存(MiB)|命令行"
-        echo "--|--|--|--"
-        echo "$pids_output" | awk '
-        /GPU\[[0-9]+\]/ || /HCU\[[0-9]+\]/ {
-            dev = $1
-            sub(/:/, "", dev)
-            next
-        }
-        /No KFD PIDs/ { next }
-        /Process ID/ { next }
-        /==/ { next }
-        NF >= 3 {
-            pid = $1
-            mem = $2
-            cmd = ""
-            for (i=3; i<=NF; i++) cmd = cmd " " $i
-            sub(/^ /, "", cmd)
-            printf "%s|%s|%s|%s\n", dev, pid, mem, cmd
-        }'
-    ) | create_table
-    echo
-}
-
-# 监控模型微调进度
-monitor_model_progress() {
-    if [ -n "$MODEL_DIR" ] || [ -n "$LOG_DIR" ]; then
-        echo -e "${CYAN}=== 模型微调进度 ===${CLEAR}"
-        
-        if [ -n "$MODEL_DIR" ] && [ -d "$MODEL_DIR" ]; then
-            (
-                echo "检查点|保存时间"
-                echo "--|--"
-                latest_checkpoint=$(find "$MODEL_DIR" -type f -name "checkpoint-*" | sort -V | tail -n 1)
-                if [ -n "$latest_checkpoint" ]; then
-                    checkpoint_name=$(basename "$latest_checkpoint")
-                    checkpoint_time=$(stat -c %y "$latest_checkpoint" 2>/dev/null || stat -f "%Sm" "$latest_checkpoint")
-                    echo "$checkpoint_name|$checkpoint_time"
-                else
-                    echo "未找到检查点|N/A"
-                fi
-            ) | create_table
-            echo
-        fi
-        
-        if [ -n "$LOG_DIR" ] && [ -d "$LOG_DIR" ]; then
-            echo -e "最新训练日志进度:"
-            latest_log=$(find "$LOG_DIR" -type f \( -name "*.log" -o -name "train*.txt" \) -print0 | xargs -0 ls -t | head -n 1)
-            if [ -n "$latest_log" ]; then
-                echo "日志文件: $latest_log"
-                echo "最近进度:"
-                tail -n 10 "$latest_log" | grep -E -i "loss|accuracy|epoch|step|progress" | tail -n 3
-            else
-                echo "未找到训练日志"
+    local hw_info
+    hw_info=$("$ROCM_SMI" --showhw --showallinfo)
+    while read -r line; do
+        if [[ $line =~ "Card Series" ]]; then
+            local id
+            id=$(echo "$line" | grep -o 'HCU\[[0-9]\+\]')
+            if [[ -n "$id" ]]; then
+                local model
+                model=$(echo "$line" | sed 's/.*Card Series:[[:space:]]*//' | xargs)
+                gpus["$id,model"]=$model
             fi
         fi
-        
-        if [ -z "$MODEL_DIR" ] && [ -z "$LOG_DIR" ]; then
-            echo "未指定模型目录或日志目录"
+    done <<< "$hw_info"
+}
+
+get_mem_info() {
+    local mem_output
+    mem_output=$("$ROCM_SMI" --showmeminfo vram)
+    local current_id=""
+    while read -r line; do
+        if [[ $line =~ HCU\[[0-9]+\] ]]; then
+            current_id=$(echo "$line" | grep -o 'HCU\[[0-9]\+\]')
         fi
-        echo
+        if [[ $line =~ "Total Memory" && -n "$current_id" ]]; then
+            gpus["$current_id,mem_total"]=$(echo "$line" | awk '{print $NF}')
+        fi
+        if [[ $line =~ "Total Used Memory" && -n "$current_id" ]]; then
+            gpus["$current_id,mem_used"]=$(echo "$line" | awk '{print $NF}')
+        fi
+    done <<< "$mem_output"
+}
+
+get_mem_bandwidth() {
+    local clocks_output
+    clocks_output=$("$ROCM_SMI" --showclocks)
+    local current_id=""
+    while read -r line; do
+        if [[ $line =~ HCU\[[0-9]+\] ]]; then
+            current_id=$(grep -o 'HCU\[[0-9]\+\]' <<< "$line")
+        fi
+        if [[ $line =~ mclk && -n $current_id ]]; then
+            local clock_mhz
+            clock_mhz=$(echo "$line" | grep -o '[0-9]\+Mhz' | sed 's/Mhz//')
+            if [[ -n "$clock_mhz" ]]; then
+                # HBM2, 4096bit width, DDR
+                local bandwidth
+                bandwidth=$(echo "scale=2; ($clock_mhz * 2 * 4096 / 8) / 1000" | bc)
+                gpus["$current_id,mem_bw"]="$bandwidth"
+            fi
+        fi
+    done <<< "$clocks_output"
+}
+
+get_process_info() {
+    local pids_output
+    pids_output=$("$ROCM_SMI" --showpids)
+    local current_id=""
+    while read -r line; do
+        if [[ $line =~ HCU\[[0-9]+\] ]]; then
+            current_id=$(echo "$line" | grep -o 'HCU\[[0-9]\+\]')
+            # Initialize processes field for the GPU
+            gpus["$current_id,procs"]="无"
+        elif [[ -n "$current_id" && $line =~ ^[0-9]+ ]]; then
+            local pid
+            pid=$(echo "$line" | awk '{print $1}')
+            local proc_name
+            # Attempt to get process name, fallback to pid if not available
+            proc_name=$(ps -o comm= -p "$pid" 2>/dev/null || echo "$pid")
+            
+            if [[ ${gpus["$current_id,procs"]} == "无" ]]; then
+                gpus["$current_id,procs"]="" # Clear default
+            else
+                gpus["$current_id,procs"]+=", " # Add separator
+            fi
+            gpus["$current_id,procs"]+="$pid:$proc_name"
+        fi
+    done <<< "$pids_output"
+}
+
+get_interconnect_bandwidth() {
+    if ! "$RUN_INTERCONNECT_TEST"; then
+        return
     fi
-}
+    echo -e "${YELLOW}正在运行卡间带宽测试，这可能需要几分钟...${NC}"
+    
+    local bw_output
+    bw_output=$($ROCM_BANDWIDTH_TEST 2>/dev/null)
+    
+    local -A gpu_map
+    local -a gpu_indices
+    local smi_devices=$("$ROCM_SMI" --showhw | grep -c 'HCU')
+    
+    while read -r line; do
+        if [[ $line =~ ^[[:space:]]*Device:[[:space:]]*([0-9]+),[[:space:]]*K100_AI ]]; then
+            gpu_indices+=("${BASH_REMATCH[1]}")
+        fi
+    done <<< "$bw_output"
 
-# 生成DCU汇总信息表格
-get_dcu_summary() {
-    if [ "$SHOW_SUMMARY" = "true" ]; then
-        echo -e "${CYAN}=== DCU汇总信息 ===${CLEAR}"
+    for (( i=0; i<smi_devices; i++ )); do
+        if [ -n "${gpu_indices[$i]}" ]; then
+            gpu_map["${gpu_indices[$i]}"]="HCU[$i]"
+        fi
+    done
+    
+    local matrix_started=false
+    local -A raw_bw
+    
+    while read -r line; do
+        if [[ $line =~ "Unidirectional copy peak bandwidth GB/s" ]]; then
+            matrix_started=true
+            continue
+        fi
+        if ! $matrix_started || [[ -z $line ]] || [[ $line =~ D/D ]]; then
+            continue
+        fi
+
+        local -a fields=($line)
+        local row_idx=${fields[0]}
         
-        # Gather all data
-        local model_info
-        model_info=$($ROCM_SMI --showhw --showallinfo 2>/dev/null)
-        local mem_info
-        mem_info=$($ROCM_SMI --showmeminfo vram 2>/dev/null)
-        local util_info
-        util_info=$($ROCM_SMI 2>/dev/null)
-        local clocks_info
-        clocks_info=$($ROCM_SMI --showclocks 2>/dev/null)
-        local pids_info
-        pids_info=$($ROCM_SMI --showpids 2>/dev/null)
-        
-        (
-            echo "设备|型号|显存(已用/总量 MiB)|显存使用率(%)|温度(°C)|理论带宽(GB/s)|进程信息(PID:名称)"
-            echo "--|--|--|--|--|--|--"
-
-            # Combine data using a more robust awk script
-            awk -v model_info="$model_info" \
-                -v mem_info="$mem_info" \
-                -v util_info="$util_info" \
-                -v clocks_info="$clocks_info" \
-                -v pids_info="$pids_info" '
-            function trim(s) { sub(/^[ \t\r\n]+/, "", s); sub(/[ \t\r\n]+$/, "", s); return s }
-            BEGIN {
-                # Parse model info
-                split(model_info, lines, "\n")
-                for (i in lines) {
-                    if (match(lines[i], /HCU\[[0-9]+\]|GPU\[[0-9]+\]/)) {
-                        id = substr(lines[i], RSTART, RLENGTH)
-                        if (lines[i] ~ /Card Series/) {
-                            sub(/.*Card Series:[ ]*/, "", lines[i])
-                            models[id] = trim(lines[i])
-                        }
-                    }
-                }
-
-                # Parse memory info
-                split(mem_info, lines, "\n")
-                for (i in lines) {
-                     if (match(lines[i], /HCU\[[0-9]+\]|GPU\[[0-9]+\]/)) {
-                        id = substr(lines[i], RSTART, RLENGTH)
-                        if (lines[i] ~ /vram Total Memory/) {
-                            n = split(lines[i], f); total_mem[id] = f[n]
-                        }
-                        if (lines[i] ~ /vram Total Used Memory/) {
-                            n = split(lines[i], f); used_mem[id] = f[n]
-                        }
-                    }
-                }
-
-                # Parse utilization info for Temperature
-                split(util_info, lines, "\n")
-                for (i in lines) {
-                    if (lines[i] ~ /^[0-9]/ && split(lines[i], f, /[[:space:]]+/) > 5) {
-                        id = "HCU[" f[1] "]"
-                        temp = f[2]; sub(/C/, "", temp)
-                        temps[id] = temp
-                    }
-                }
-
-                # Parse clocks info for bandwidth
-                split(clocks_info, lines, "\n")
-                for (i in lines) {
-                    if (match(lines[i], /HCU\[[0-9]+\]|GPU\[[0-9]+\]/)) {
-                        id = substr(lines[i], RSTART, RLENGTH)
-                        if (lines[i] ~ /mclk/ && match(lines[i], /[0-9]+Mhz/)) {
-                            clock_mhz = substr(lines[i], RSTART, RLENGTH-3)
-                            bit_width = 4096; multiplier = 2;
-                            bandwidths[id] = (clock_mhz * multiplier * bit_width / 8) / 1000
-                        }
-                    }
-                }
-
-                # Parse PIDs info
-                current_id = ""
-                current_pid = ""
-                split(pids_info, lines, "\n")
-                for (i in lines) {
-                     if (match(lines[i], /HCU\[[0-9]+\]|GPU\[[0-9]+\]/)) {
-                        current_id = substr(lines[i], RSTART, RLENGTH)
-                        processes[current_id] = "无" # Default value
-                    }
-                    if (lines[i] ~ /Process ID:/) {
-                        sub(/.*Process ID:[ ]*/, "", lines[i]); current_pid = trim(lines[i])
-                    }
-                    if (lines[i] ~ /Process Name:/) {
-                        sub(/.*Process Name:[ ]*/, "", lines[i]); proc_name = trim(lines[i])
-                        if (processes[current_id] == "无") {
-                           processes[current_id] = "" # Clear default
-                        }
-                        if (processes[current_id] != "") {
-                            processes[current_id] = processes[current_id] ","
-                        }
-                        processes[current_id] = processes[current_id] current_pid ":" proc_name
-                    }
-                }
-
-                # Create a sorted list of keys
-                for (k in models) keys[k] = 1
-                
-                i = 0
-                for (k in keys) sorted_keys[i++] = k
-                
-                for (j = 0; j < i - 1; j++) {
-                    for (l = 0; l < i - j - 1; l++) {
-                        split(sorted_keys[l], a, "[[]|[]]")
-                        split(sorted_keys[l+1], b, "[[]|[]]")
-                        if (a[2]+0 > b[2]+0) {
-                            temp = sorted_keys[l]; sorted_keys[l] = sorted_keys[l+1]; sorted_keys[l+1] = temp
-                        }
-                    }
-                }
-                
-                # Print combined table
-                for (j=0; j<i; j++) {
-                    id = sorted_keys[j]
-                    mem_usage = 0
-                    if (total_mem[id] > 0) {
-                        mem_usage = (used_mem[id] / total_mem[id]) * 100
-                    }
-                    printf "%s|%s|%d/%d|%.2f|%s|%.2f|%s\n",
-                        id,
-                        models[id] ? models[id] : "N/A",
-                        used_mem[id] ? used_mem[id] : 0,
-                        total_mem[id] ? total_mem[id] : 0,
-                        mem_usage,
-                        temps[id] ? temps[id] : "N/A",
-                        bandwidths[id] ? bandwidths[id] : 0.00,
-                        processes[id] ? processes[id] : "无"
-                }
-            }'
-        ) | create_table
-        echo
-    fi
+        if [[ -n "${gpu_map[$row_idx]}" ]]; then
+            for (( i=0; i<smi_devices; i++ )); do
+                local col_idx=${gpu_indices[$i]}
+                local bw_val=${fields[i+1]}
+                if [[ "$row_idx" != "$col_idx" && "$bw_val" != "N/A" ]]; then
+                     raw_bw["$row_idx"]+="$bw_val "
+                fi
+            done
+        fi
+    done <<< "$bw_output"
+    
+    for dev_idx in "${!raw_bw[@]}"; do
+        local hcu_id=${gpu_map[$dev_idx]}
+        local -a values=(${raw_bw[$dev_idx]})
+        local sum=0
+        local count=0
+        for val in "${values[@]}"; do
+            sum=$(echo "$sum + $val" | bc)
+            ((count++))
+        done
+        if (( count > 0 )); then
+            local avg
+            avg=$(echo "scale=2; $sum / $count" | bc)
+            gpus["$hcu_id,interconnect_bw"]="$avg"
+        fi
+    done
 }
 
-# 显示所有加速卡总显存
-get_total_vram_summary() {
-    echo -e "${CYAN}=== 所有加速卡显存汇总 ===${CLEAR}"
-    $ROCM_SMI --showmeminfo vram | awk '
-    /vram Total Memory \(MiB\):/ { total_vram += $NF }
-    /vram Total Used Memory \(MiB\):/ { used_vram += $NF }
-    END {
-      printf "所有加速卡总显存 (Total VRAM): %s MiB\n", total_vram;
-      printf "所有加速卡已用显存 (Total Used VRAM): %s MiB\n", used_vram;
-      if (total_vram > 0) {
-          usage = (used_vram / total_vram) * 100;
-          printf "总体使用率: %.2f%%\n", usage;
-      }
-    }'
-    echo
-}
-
-run_monitor() {
-    if [ "$WATCH_MODE" = "true" ]; then
-        clear
-        echo -e "${GREEN}============= DCU 监控 ($(date '+%Y-%m-%d %H:%M:%S')) [刷新间隔: ${INTERVAL}秒] =============${CLEAR}"
+# --- 渲染模块 ---
+render_table() {
+    # 标题
+    echo -e "${GREEN}╔═════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║                                            DCU 监控面板                                                 ║${NC}"
+    echo -e "${GREEN}╚═════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝${NC}"
+    
+    # 时间戳
+    echo -e "${CYAN}监控时间: $(date '+%Y-%m-%d %H:%M:%S')${NC}"
+    echo ""
+    
+    # 构建表头
+    local header_top="┌─────┬──────────┬───────────────────┬─────────┬────────┬──────────────────┬──────────────────────────"
+    local header_mid1="│ GPU │   型号   │      显存(MiB)    │ 使用率  │ 温度   │ 显存带宽(GB/s)   │ 进程 (PID:名称)          "
+    local header_mid2="│     │          │    (已用/总量)    │ (GPU %) │ (°C)   │     (理论)       │                          "
+    local header_bottom="├─────┼──────────┼───────────────────┼─────────┼────────┼──────────────────┼──────────────────────────"
+    local footer="└─────┴──────────┴───────────────────┴─────────┴────────┴──────────────────┴──────────────────────────"
+    
+    if "$RUN_INTERCONNECT_TEST"; then
+        header_top+="┬────────────────┐"
+        header_mid1+="│ 互联带宽(G/s)  │"
+        header_mid2+="│ (Avg Unidir)   │"
+        header_bottom+="┼────────────────┤"
+        footer+="┴────────────────┘"
     else
-        echo -e "${GREEN}============= DCU 监控 ($(date '+%Y-%m-%d %H:%M:%S')) =============${CLEAR}"
+        header_top+="┐"
+        header_mid1+="│"
+        header_mid2+="│"
+        header_bottom+="┤"
+        footer+="┘"
     fi
 
-    get_dcu_model
-    get_memory_usage
-    get_temp_and_util
-    get_memory_bandwidth
-    get_process_info
-    if [ "$SHOW_SUMMARY" = "true" ]; then
-        get_dcu_summary
-    fi
-    monitor_model_progress
+    echo -e "${YELLOW}DCU设备状态:${NC}"
+    echo -e "$header_top"
+    echo -e "$header_mid1"
+    echo -e "$header_mid2"
+    echo -e "$header_bottom"
 
-    if [ "$SHOW_INTERCONNECT" = "true" ]; then
-        get_interconnect_bandwidth
-    fi
+    # 渲染数据行
+    for id in $(for key in "${!gpus[@]}"; do if [[ $key == *,name ]]; then echo "${gpus[$key]}"; fi; done | sort -V); do
+        local model=${gpus["$id,model"]:-N/A}
+        local mem_used=${gpus["$id,mem_used"]:-0}
+        local mem_total=${gpus["$id,mem_total"]:-0}
+        local util=${gpus["$id,util"]:-0%}
+        local temp=${gpus["$id,temp"]:-0.0C}
+        local mem_bw=${gpus["$id,mem_bw"]:-N/A}
+        local procs=${gpus["$id,procs"]:-无}
+        
+        local mem_str="$mem_used / $mem_total"
+        
+        local line
+        line=$(printf "│ %-3s │ %-8s │ %-17s │ %-7s │ %-6s │ %-16s │ %-24s " \
+            "${id//HCU/}" \
+            "$model" \
+            "$mem_str" \
+            "$util" \
+            "${temp%C}" \
+            "$mem_bw" \
+            "$procs")
+        
+        if "$RUN_INTERCONNECT_TEST"; then
+            local interconnect_bw=${gpus["$id,interconnect_bw"]:-N/A}
+            line+=$(printf "│ %-14s │" "$interconnect_bw")
+        else
+            line+="│"
+        fi
+        echo "$line"
+    done
     
-    get_total_vram_summary
-
-    if [ "$VERBOSE" = "true" ]; then
-        echo -e "${PURPLE}==== 帮助信息 ====${CLEAR}"
-        echo "按 Ctrl+C 退出监控"
-        echo "运行 '$0 --help' 查看更多选项"
-    fi
-    
-    echo -e "${GREEN}========================================================================${CLEAR}"
+    echo -e "$footer"
 }
 
-# 主函数
+
+# --- 主逻辑 ---
 main() {
     check_requirements
     
-    if [ "$WATCH_MODE" = "true" ]; then
+    run_monitor() {
+        # 清空旧数据
+        unset gpus
+        declare -A gpus
+
+        # 采集数据
+        get_gpu_list
+        get_base_info
+        get_mem_info
+        get_mem_bandwidth
+        get_process_info
+        get_interconnect_bandwidth # 只有在-i时才会实际运行
+
+        # 渲染输出
+        if "$WATCH_MODE"; then clear; fi
+        render_table
+    }
+
+    if "$WATCH_MODE"; then
         while true; do
             run_monitor
             sleep "$INTERVAL"
@@ -624,5 +364,4 @@ main() {
     fi
 }
 
-# 运行主函数
 main 
