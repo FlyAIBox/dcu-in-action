@@ -132,7 +132,7 @@ run_env_check() {
     if [ "$RUN_ENV_CHECK" = "true" ]; then
         log_info "运行环境检查..."
         cd /workspace/dcu-in-action
-        bash scripts/setup/check_environment.sh
+        bash scripts/setup/check_dcu_environment.sh
     fi
 }
 

@@ -132,7 +132,7 @@ source ~/.bashrc
 
 ```bash
 # 运行环境检查脚本
-./common/setup/check_environment.sh
+./common/setup/check_dcu_environment.sh
 
 # 验证DCU设备
 python -c "

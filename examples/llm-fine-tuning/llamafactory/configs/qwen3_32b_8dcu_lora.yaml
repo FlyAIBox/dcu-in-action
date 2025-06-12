@@ -1,0 +1,154 @@
+# Qwen3-32B 8卡DCU DeepSpeed LoRA微调配置
+# 海光DCU k100-AI (64GB HBM2E) x 8
+
+# 基础模型配置
+model_name_or_path: Qwen/Qwen2.5-32B-Instruct
+cache_dir: /root/AI-BOX/models
+use_fast_tokenizer: true
+
+# 训练阶段和类型
+stage: sft
+do_train: true
+finetuning_type: lora
+
+# LoRA 配置 (针对32B模型优化)
+lora_target: 
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+lora_rank: 256          # 大模型使用更高的rank
+lora_alpha: 512        # alpha = 2 * rank
+lora_dropout: 0.1
+use_rslora: true       # 使用rank-stabilized LoRA
+lora_bf16_mode: true   # DCU支持BF16
+
+# 数据集配置
+dataset: custom_dataset  # 替换为您的数据集名称
+dataset_dir: data
+template: qwen
+cutoff_len: 4096       # 32B模型支持更长的上下文
+max_samples: 100000
+overwrite_cache: true
+preprocessing_num_workers: 16
+
+# 批处理配置 (8卡DCU优化)
+per_device_train_batch_size: 1     # 32B模型单卡batch_size=1
+per_device_eval_batch_size: 1
+gradient_accumulation_steps: 4     # 有效batch_size = 1*8*4 = 32
+eval_accumulation_steps: 4
+
+# 数据加载配置
+dataloader_num_workers: 4
+dataloader_pin_memory: true
+dataloader_persistent_workers: true
+
+# 训练参数
+learning_rate: 1.0e-4
+num_train_epochs: 3
+max_steps: -1
+warmup_ratio: 0.1
+lr_scheduler_type: cosine
+weight_decay: 0.01
+max_grad_norm: 1.0
+
+# 混合精度和内存优化
+bf16: true                          # DCU k100-AI原生支持BF16
+fp16: false
+gradient_checkpointing: true        # 必须开启以节省显存
+use_reentrant: false               # 新版gradient checkpointing
+
+# DeepSpeed配置
+deepspeed: configs/deepspeed_qwen3_32b_8dcu.json
+ddp_timeout: 7200
+ddp_find_unused_parameters: false
+
+# 评估和保存策略
+val_size: 0.05
+evaluation_strategy: steps
+eval_steps: 100
+save_strategy: steps
+save_steps: 50
+save_total_limit: 3
+load_best_model_at_end: true
+metric_for_best_model: eval_loss
+greater_is_better: false
+
+# 日志配置
+logging_steps: 10
+logging_first_step: true
+logging_nan_inf_filter: true
+report_to: 
+  - tensorboard
+  - wandb
+
+# 输出配置
+output_dir: saves/qwen3-32b-8dcu-lora
+logging_dir: logs/qwen3-32b-8dcu-lora
+run_name: qwen3-32b-8dcu-lora
+
+# 高级配置
+remove_unused_columns: false
+label_names: 
+  - labels
+include_num_input_tokens_seen: true
+save_safetensors: true
+
+# 数据处理
+max_source_length: 2048
+max_target_length: 2048
+ignore_pad_token_for_loss: true
+
+# 推理配置
+do_predict: false
+predict_with_generate: true
+generation_max_length: 4096
+generation_num_beams: 1
+generation_do_sample: true
+generation_temperature: 0.7
+generation_top_p: 0.9
+
+# 模型并行配置
+use_flash_attention_2: false  # DCU暂不支持Flash Attention
+
+# 分布式训练优化
+local_rank: -1
+ddp_backend: nccl
+
+# DCU特定环境变量设置（将在启动脚本中设置）
+# export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+# export NCCL_DEBUG=INFO
+# export NCCL_IB_DISABLE=1
+
+# 模型推送（可选）
+push_to_hub: false
+hub_model_id: null
+hub_strategy: end
+hub_token: null
+
+# 回调函数
+callbacks: null
+
+# 早停策略
+early_stopping_patience: 3
+early_stopping_threshold: 0.001
+
+# 其他高级选项
+seed: 42
+data_seed: 42
+disable_tqdm: false
+ignore_data_skip: false
+group_by_length: false
+length_column_name: length
+optim: adamw_torch
+adam_beta1: 0.9
+adam_beta2: 0.999
+adam_epsilon: 1.0e-08
+max_grad_norm: 1.0
+resume_from_checkpoint: null
+torch_compile: false
+torch_compile_backend: null
+torch_compile_mode: null 

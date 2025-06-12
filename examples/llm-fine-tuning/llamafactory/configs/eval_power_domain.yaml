@@ -1,0 +1,76 @@
+# Qwen3-32B 电力领域模型评估配置
+# 用于评估微调后的模型在电力领域的性能
+
+# 模型配置
+model_name_or_path: saves/qwen3-32b-power-domain-8dcu
+cache_dir: /root/AI-BOX/models
+use_fast_tokenizer: true
+
+# 评估阶段
+stage: sft
+do_eval: true
+finetuning_type: lora
+
+# 数据集配置
+dataset: power_domain
+dataset_dir: data
+template: qwen
+cutoff_len: 4096
+overwrite_cache: true
+preprocessing_num_workers: 8
+
+# 评估批处理配置
+per_device_eval_batch_size: 1
+eval_accumulation_steps: 4
+
+# 数据加载配置
+dataloader_num_workers: 4
+dataloader_pin_memory: true
+
+# 混合精度
+bf16: true
+fp16: false
+
+# 评估策略
+val_size: 1.0  # 使用全部数据进行评估
+evaluation_strategy: no
+save_strategy: no
+
+# 日志配置
+logging_steps: 10
+report_to: 
+  - tensorboard
+
+# 输出配置
+output_dir: results/power_domain_eval
+logging_dir: logs/power_domain_eval
+
+# 评估指标
+metric_for_best_model: eval_loss
+load_best_model_at_end: false
+
+# 推理配置
+predict_with_generate: true
+generation_max_length: 4096
+generation_num_beams: 1
+generation_do_sample: false  # 评估时使用贪心解码
+generation_temperature: 1.0
+
+# 高级配置
+remove_unused_columns: false
+label_names: 
+  - labels
+include_num_input_tokens_seen: true
+
+# 分布式评估
+ddp_timeout: 3600
+ddp_find_unused_parameters: false
+
+# 其他选项
+seed: 42
+disable_tqdm: false
+ignore_data_skip: true
+
+# 评估特定配置
+save_total_limit: 0  # 评估时不保存模型
+save_on_each_node: false 

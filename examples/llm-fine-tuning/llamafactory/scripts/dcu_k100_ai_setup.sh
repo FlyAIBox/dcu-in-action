@@ -50,9 +50,9 @@ check_environment() {
     log_info "内核版本: $KERNEL_VERSION"
     
     # 检查DCU驱动
-    if command -v dcu-smi &> /dev/null; then
+    if command -v hy-smi &> /dev/null; then
         log_success "DCU驱动已安装"
-        dcu-smi -L
+        hy-smi -L
     else
         log_warning "DCU驱动未安装，请先安装ROCK驱动"
         return 1
@@ -202,9 +202,9 @@ EOF
 echo "🔍 DCU k100-AI 性能监控"
 echo "=========================="
 
-# 检查dcu-smi是否可用
-if ! command -v dcu-smi &> /dev/null; then
-    echo "❌ dcu-smi命令未找到，请检查DCU驱动安装"
+# 检查hy-smi是否可用
+if ! command -v hy-smi &> /dev/null; then
+    echo "❌ hy-smi命令未找到，请检查DCU驱动安装"
     exit 1
 fi
 
@@ -215,12 +215,12 @@ while true; do
     
     # DCU使用情况
     echo "📊 DCU使用情况:"
-    if dcu-smi --query-gpu=index,name,memory.used,memory.total,utilization.gpu,temperature.gpu --format=csv,noheader,nounits 2>/dev/null; then
-        dcu-smi --query-gpu=index,name,memory.used,memory.total,utilization.gpu,temperature.gpu --format=csv,noheader,nounits | \
+    if hy-smi --query-gpu=index,name,memory.used,memory.total,utilization.gpu,temperature.gpu --format=csv,noheader,nounits 2>/dev/null; then
+        hy-smi --query-gpu=index,name,memory.used,memory.total,utilization.gpu,temperature.gpu --format=csv,noheader,nounits | \
         awk -F',' '{printf "DCU %s: %s | 显存: %s/%s MB | 利用率: %s%% | 温度: %s°C\n", $1, $2, $3, $4, $5, $6}'
     else
         echo "简化模式显示:"
-        dcu-smi -L 2>/dev/null || echo "无法获取DCU信息"
+        hy-smi -L 2>/dev/null || echo "无法获取DCU信息"
     fi
     
     echo ""

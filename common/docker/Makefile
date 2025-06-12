@@ -36,7 +36,7 @@ help: ## 显示帮助信息
 install: ## 安装项目依赖和环境
 	@echo "$(GREEN)🚀 安装DCU-in-Action环境...$(RESET)"
 	@echo "$(BLUE)检查DCU环境...$(RESET)"
-	@bash common/setup/check_environment.sh
+	@bash common/setup/check_dcu_environment.sh
 	@echo "$(BLUE)安装Python依赖...$(RESET)"
 	$(PIP) install --upgrade pip setuptools wheel
 	$(PIP) install -r requirements.txt

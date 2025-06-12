@@ -150,7 +150,7 @@ dcu-in-action/
 │   ├── 📁 setup/                          # 环境配置
 │   │   ├── install_dependencies.sh       # 自动依赖安装
 │   │   ├── install_requirements.sh       # 快速依赖安装
-│   │   └── check_environment.sh          # 环境检查脚本
+│   │   └── check_dcu_environment.sh          # 环境检查脚本
 │   ├── 📁 docker/                         # Docker相关文件
 │   └── __init__.py                       # 核心模块初始化
 ├── 📁 examples/                           # 🎯 实战示例
