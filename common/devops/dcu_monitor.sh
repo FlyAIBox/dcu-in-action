@@ -20,6 +20,31 @@ WATCH_MODE=false
 INTERVAL=2
 RUN_INTERCONNECT_TEST=false
 
+# --- Spinner ---
+spinner_pid=
+trap 'kill "$spinner_pid" 2>/dev/null; exit' SIGINT SIGTERM
+
+start_spinner() {
+    (
+        while :; do
+            for s in / - \\ \|; do
+                printf "\r\e[0;36m[%s]\e[0m %s..." "$s" "$1"
+                sleep 0.2
+            done
+        done
+    ) &
+    spinner_pid=$!
+    disown
+}
+
+stop_spinner() {
+    if [[ -n $spinner_pid ]]; then
+        kill "$spinner_pid"
+        wait "$spinner_pid" 2>/dev/null
+    fi
+    printf "\r%s\n" "                                                                               "
+}
+
 # --- 工具路径 ---
 # 优先使用环境变量 $ROCM_PATH, 否则使用默认值
 ROCM_PATH=${ROCM_PATH:-/opt/dtk-25.04}
@@ -29,7 +54,7 @@ ROCM_BANDWIDTH_TEST="${ROCM_PATH}/bin/rocm-bandwidth-test"
 
 # --- 帮助信息 ---
 show_help() {
-    echo -e "${CYAN}DCU 监控面板 - v2.1${NC}"
+    echo -e "${CYAN}DCU 监控面板 - v2.2${NC}"
     echo "一个用于监控和显示DCU状态的增强脚本。"
     echo
     echo "用法: $0 [选项]"
@@ -331,12 +356,27 @@ render_table() {
     echo -e "$footer"
 }
 
+render_usage_hints() {
+    echo ""
+    echo -e "${YELLOW}--- 使用提示 ---${NC}"
+    echo -e "  > 如需持续刷新监控，请使用 ${CYAN}-w${NC} 或 ${CYAN}--watch${NC} 参数。"
+    echo -e "    示例: ${GREEN}$0 -w -t 5${NC}"
+    
+    if ! $RUN_INTERCONNECT_TEST; then
+        echo -e "  > 如需进行卡间带宽测试 (此操作耗时较长)，请添加 ${CYAN}-i${NC} 参数。"
+        echo -e "    示例: ${GREEN}$0 -i${NC}"
+    fi
+    
+    echo -e "  > 查看所有可用选项，请使用 ${CYAN}-h${NC} 或 ${CYAN}--help${NC}。"
+}
+
 
 # --- 主逻辑 ---
 main() {
     check_requirements
     
     run_monitor() {
+        start_spinner "正在采集DCU数据"
         # 清空旧数据
         unset gpus
         declare -A gpus
@@ -347,12 +387,17 @@ main() {
         get_mem_info
         get_mem_bandwidth
         get_process_info
-        get_interconnect_bandwidth # 只有在-i时才会实际运行
+        stop_spinner
+
+        # 互联带宽测试独立于spinner，因为它有自己的提示信息且耗时很长
+        get_interconnect_bandwidth 
 
         # 渲染输出
         if "$WATCH_MODE"; then clear; fi
         render_table
     }
+
+    trap 'stop_spinner; echo -e "\n监控已终止。"; exit 0' SIGINT
 
     if "$WATCH_MODE"; then
         while true; do
@@ -361,6 +406,7 @@ main() {
         done
     else
         run_monitor
+        render_usage_hints
     fi
 }
 
