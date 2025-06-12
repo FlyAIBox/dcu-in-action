@@ -303,20 +303,20 @@ get_interconnect_bandwidth() {
 # --- 渲染模块 ---
 render_table() {
     # 标题
-    echo -e "${GREEN}╔═════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${GREEN}║                                            DCU 监控面板                                                 ║${NC}"
-    echo -e "${GREEN}╚═════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝${NC}"
+    echo -e "${GREEN}╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║                                             DCU 监控面板                                                  ║${NC}"
+    echo -e "${GREEN}╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝${NC}"
     
     # 时间戳
     echo -e "${CYAN}监控时间: $(date '+%Y-%m-%d %H:%M:%S')${NC}"
     echo ""
     
-    # 构建表头
-    local header_top="┌─────┬──────────┬───────────────────┬─────────┬────────┬──────────────────┬──────────────────────────"
-    local header_mid1="│ GPU │   型号   │      显存(MiB)    │ 使用率  │ 温度   │ 显存带宽(GB/s)   │ 进程 (PID:名称)          "
-    local header_mid2="│     │          │    (已用/总量)    │ (GPU %) │ (°C)   │     (理论)       │                          "
-    local header_bottom="├─────┼──────────┼───────────────────┼─────────┼────────┼──────────────────┼──────────────────────────"
-    local footer="└─────┴──────────┴───────────────────┴─────────┴────────┴──────────────────┴──────────────────────────"
+    # 构建表头，第一列加宽以适应"总计"
+    local header_top="┌──────┬──────────┬───────────────────┬─────────┬────────┬──────────────────┬──────────────────────────"
+    local header_mid1="│  GPU │   型号   │      显存(MiB)    │ 使用率  │ 温度   │ 显存带宽(GB/s)   │ 进程 (PID:名称)          "
+    local header_mid2="│      │          │    (已用/总量)    │ (GPU %) │ (°C)   │     (理论)       │                          "
+    local header_bottom="├──────┼──────────┼───────────────────┼─────────┼────────┼──────────────────┼──────────────────────────"
+    local footer="└──────┴──────────┴───────────────────┴─────────┴────────┴──────────────────┴──────────────────────────"
     
     if "$RUN_INTERCONNECT_TEST"; then
         header_top+="┬────────────────┐"
@@ -339,7 +339,10 @@ render_table() {
     echo -e "$header_bottom"
 
     # 渲染数据行
-    for id in $(for key in "${!gpus[@]}"; do if [[ $key == *,name ]]; then echo "${gpus[$key]}"; fi; done | sort -V); do
+    local gpu_ids
+    mapfile -t gpu_ids < <(for key in "${!gpus[@]}"; do if [[ $key == *,name ]]; then echo "${gpus[$key]}"; fi; done | sort -V)
+    
+    for id in "${gpu_ids[@]}"; do
         local model=${gpus["$id,model"]:-N/A}
         local mem_used=${gpus["$id,mem_used"]:-0}
         local mem_total=${gpus["$id,mem_total"]:-0}
@@ -351,7 +354,7 @@ render_table() {
         local mem_str="$mem_used / $mem_total"
         
         local line
-        line=$(printf "│ %-3s │ %-8s │ %-17s │ %-7s │ %-6s │ %-16s │ %-24s " \
+        line=$(printf "│ %-4s │ %-8s │ %-17s │ %-7s │ %-6s │ %-16s │ %-24s " \
             "${id//HCU/}" \
             "$model" \
             "$mem_str" \
@@ -368,6 +371,60 @@ render_table() {
         fi
         echo "$line"
     done
+    
+    # --- 计算并渲染总计行 ---
+    local total_mem_used=0
+    local total_mem_total=0
+    local temp_sum=0.0
+    local util_sum=0.0
+    local mem_bw_sum=0.0
+    local gpu_count=${#gpu_ids[@]}
+    local total_procs=0
+
+    for id in "${gpu_ids[@]}"; do
+        ((total_mem_used += ${gpus["$id,mem_used"]:-0}))
+        ((total_mem_total += ${gpus["$id,mem_total"]:-0}))
+        
+        local temp_val=${gpus["$id,temp"]%C}
+        temp_sum=$(echo "$temp_sum + $temp_val" | bc)
+        
+        local util_val=${gpus["$id,util"]%?}
+        util_sum=$(echo "$util_sum + $util_val" | bc)
+
+        local mem_bw_val=${gpus["$id,mem_bw"]:-0}
+        mem_bw_sum=$(echo "$mem_bw_sum + $mem_bw_val" | bc)
+
+        local procs_str=${gpus["$id,procs"]:-无}
+        if [[ "$procs_str" != "无" ]]; then
+            local num_procs=$(echo "$procs_str" | grep -o ',' | wc -l)
+            ((total_procs += num_procs + 1))
+        fi
+    done
+
+    local avg_temp="N/A"
+    local avg_util="N/A"
+    local avg_mem_bw="N/A"
+    if (( gpu_count > 0 )); then
+        avg_temp=$(printf "%.1f" "$(echo "scale=2; $temp_sum / $gpu_count" | bc)")
+        avg_util=$(printf "%.1f" "$(echo "scale=2; $util_sum / $gpu_count" | bc)")%
+        avg_mem_bw=$(printf "%.2f" "$(echo "scale=2; $mem_bw_sum / $gpu_count" | bc)")
+    fi
+
+    local total_mem_str="$total_mem_used / $total_mem_total"
+    local total_procs_str="$total_procs 个进程"
+    
+    echo -e "$header_bottom"
+    
+    local total_line
+    total_line=$(printf "│ %-4s │ %-8s │ %-17s │ %-7s │ %-6s │ %-16s │ %-24s " \
+        "总计" "($gpu_count GPUs)" "$total_mem_str" "$avg_util" "$avg_temp" "$avg_mem_bw" "$total_procs_str")
+    
+    if "$RUN_INTERCONNECT_TEST"; then
+        total_line+=$(printf "│ %-14s │" "N/A")
+    else
+        total_line+="│"
+    fi
+    echo "$total_line"
     
     echo -e "$footer"
 }
