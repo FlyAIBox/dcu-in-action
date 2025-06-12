@@ -191,27 +191,43 @@ get_mem_bandwidth() {
 }
 
 get_process_info() {
+    # Initialize all GPUs with '无' for processes.
+    for id in $(for key in "${!gpus[@]}"; do if [[ $key == *,name ]]; then echo "${gpus[$key]}"; fi; done); do
+        gpus["$id,procs"]="无"
+    done
+
     local pids_output
-    pids_output=$("$ROCM_SMI" --showpids)
-    local current_id=""
+    pids_output=$("$ROCM_SMI" --showpids -P)
+    
+    local current_pid=""
     while read -r line; do
-        if [[ $line =~ HCU\[[0-9]+\] ]]; then
-            current_id=$(echo "$line" | grep -o 'HCU\[[0-9]\+\]')
-            # Initialize processes field for the GPU
-            gpus["$current_id,procs"]="无"
-        elif [[ -n "$current_id" && $line =~ ^[0-9]+ ]]; then
-            local pid
-            pid=$(echo "$line" | awk '{print $1}')
-            local proc_name
-            # Attempt to get process name, fallback to pid if not available
-            proc_name=$(ps -o comm= -p "$pid" 2>/dev/null || echo "$pid")
+        # Capture the PID when a new process block starts
+        if [[ $line =~ ^PID:[[:space:]]+([0-9]+) ]]; then
+            current_pid=${BASH_REMATCH[1]}
+        
+        # When HCU Index is found for the current PID, associate them
+        elif [[ -n "$current_pid" && $line =~ HCU\ Index:[[:space:]]*\[\'([0-9]+)\'\] ]]; then
+            local hcu_index=${BASH_REMATCH[1]}
+            local id="HCU[$hcu_index]"
             
-            if [[ ${gpus["$current_id,procs"]} == "无" ]]; then
-                gpus["$current_id,procs"]="" # Clear default
-            else
-                gpus["$current_id,procs"]+=", " # Add separator
+            # Ensure we are tracking this GPU
+            if [[ -v "gpus[$id,name]" ]]; then
+                local proc_name
+                proc_name=$(ps -o comm= -p "$current_pid" 2>/dev/null || echo "pid-$current_pid")
+                local proc_info="$current_pid:$proc_name"
+
+                if [[ ${gpus["$id,procs"]} == "无" ]]; then
+                    gpus["$id,procs"]="$proc_info"
+                else
+                    gpus["$id,procs"]+=", $proc_info"
+                fi
             fi
-            gpus["$current_id,procs"]+="$pid:$proc_name"
+            # Reset current_pid after processing to avoid mis-association with processes that have no HCU index
+            current_pid=""
+        
+        # Reset current_pid if we reach the end of a block (an empty line often separates them)
+        elif [[ -n "$current_pid" && -z "$line" ]]; then
+             current_pid=""
         fi
     done <<< "$pids_output"
 }
@@ -368,6 +384,10 @@ render_usage_hints() {
     fi
     
     echo -e "  > 查看所有可用选项，请使用 ${CYAN}-h${NC} 或 ${CYAN}--help${NC}。"
+    echo ""
+    echo -e "${YELLOW}* 进程信息查看提示:${NC}"
+    echo -e "  如果你想查看启动进程的完整命令行（包括参数），可以运行："
+    echo -e "  ${GREEN}cat /proc/<PID>/cmdline${NC}"
 }
 
 
