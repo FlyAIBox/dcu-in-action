@@ -69,6 +69,12 @@ show_help() {
     echo "  $0                   # 运行一次，显示基本信息"
     echo "  $0 -w -t 5           # 每5秒刷新一次基本信息"
     echo "  $0 -i                # 运行一次，包含卡间带宽测试"
+    echo
+    echo "【推荐】将本脚本目录加入PATH，并设置别名，便于全局调用："
+    echo "  echo \"export PATH=\$PATH:/your/script/dir\" >> ~/.bashrc"
+    echo "  echo \"alias dcu-mon='dcu_monitor.sh'\" >> ~/.bashrc"
+    echo "  source ~/.bashrc"
+    echo "  # 之后可直接用 dcu-mon 调用"
     exit 0
 }
 
@@ -81,8 +87,8 @@ while [ $# -gt 0 ]; do
             ;;
         -t|--time)
             if [[ "$2" =~ ^[0-9]+$ ]]; then
-                INTERVAL="$2"
-                shift 2
+            INTERVAL="$2"
+            shift 2
             else
                 echo -e "${RED}错误: -t/--time 需要一个有效的秒数。${NC}" >&2
                 exit 1
@@ -467,7 +473,7 @@ main() {
         stop_spinner
 
         # 互联带宽测试独立于spinner，因为它有自己的提示信息且耗时很长
-        get_interconnect_bandwidth 
+                get_interconnect_bandwidth
 
         # 渲染输出
         if "$WATCH_MODE"; then clear; fi
