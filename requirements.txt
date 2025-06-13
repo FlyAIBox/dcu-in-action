@@ -31,6 +31,9 @@ https://download.sourcefind.cn:65024/file/4/triton/DAS1.5/triton-3.0.0+das.opt4.
 # transformer_engine==1.9.0+das.opt2.dtk2504
 https://download.sourcefind.cn:65024/file/4/transformer_engine/DAS1.5/transformer_engine-1.9.0+das.opt2.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl
 
+# bitsandbytes==0.42.0+das.opt1.dtk24043
+https://download.sourcefind.cn:65024/directlink/4/bitsandbytes/DAS1.3/bitsandbytes-0.42.0+das.opt1.dtk24043-py3-none-any.whl
+
 # 高性能推理引擎
 # vllm==0.6.2+das.opt3.dtk2504
 https://download.sourcefind.cn:65024/file/4/vllm/DAS1.5/vllm-0.6.2+das.opt3.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl
