@@ -8,9 +8,21 @@ import json # 用于加载 DeepSpeed 配置
 # --- 1. 环境与日志设置 ---
 # 设置一些环境变量，优化分布式训练（可选但推荐）
 os.environ["TOKENIZERS_PARALLELISM"] = "false" # 避免 Hugging Face Tokenizers 库的并行化警告
-# os.environ["NCCL_P2P_DISABLE"] = "1" # 对于某些硬件配置或调试时可能有用，通常不需要禁用点对点通信
-# os.environ["NCCL_IB_DISABLE"] = "0" # 确保 InfiniBand 开启，如果硬件支持，对多卡高速互联至关重要
-# os.environ["NCCL_DEBUG"] = "INFO" # 打印 NCCL (NVIDIA Collective Communications Library) 调试信息，用于问题排查
+
+# --- 关键修改：针对 ROCm 内存优化和多 GPU 调试 ---
+# PYTORCH_HIP_ALLOC_CONF：解决 HIP OOM 错误中提到的内存碎片化问题。
+# "expandable_segments:True" 允许 PyTorch 的 HIP 后端使用可扩展的内存段，提高内存利用率。
+os.environ["PYTORCH_HIP_ALLOC_CONF"] = "expandable_segments:True"
+
+# NCCL_IB_DISABLE：确保 InfiniBand 开启（如果您的硬件支持），对多卡高速互联至关重要。
+# 设置为 "0" 明确启用 InfiniBand。
+os.environ["NCCL_IB_DISABLE"] = "0"
+
+# NCCL_DEBUG：打印 NCCL (NVIDIA Collective Communications Library) 调试信息。
+# "INFO" 级别会提供关于分布式通信的详细日志，有助于问题排查。
+os.environ["NCCL_DEBUG"] = "INFO"
+# os.environ["NCCL_P2P_DISABLE"] = "1" # 通常不需要禁用点对点通信，除非有特定问题
+
 
 # --- 2. DeepSpeed 配置定义 ---
 # DeepSpeed 配置定义为 Python 字典，之后会转换为 JSON 字符串并保存到文件
@@ -72,9 +84,9 @@ deepspeed_config = {
             "device": "cpu", # 将优化器状态存储在 CPU 内存中，显著节省 GPU 显存。
             "pin_memory": True # 启用锁页内存，加速 CPU 和 GPU 之间的数据传输。
         },
-        "offload_param": { # 将模型参数卸载到 CPU （在 Stage 2 下通常不必要，但此处保留）
-            "device": "cpu", # 在 Stage 3 下，模型参数会卸载到 CPU。在 Stage 2 下，此配置通常不发挥作用。
-            "pin_memory": True # 启用锁页内存。
+        "offload_param": { # 将模型参数卸载到 CPU
+             "device": "cpu", # 在 Stage 3 下，模型参数会卸载到 CPU。在 Stage 2 下，此配置通常不发挥作用，但为了兼容性保留。
+             "pin_memory": True # 启用锁页内存。
         },
         "overlap_comm": True, # 启用通信和计算重叠，隐藏分布式通信的延迟。
         "contiguous_gradients": True, # 将梯度存储在连续内存中，优化内存访问和通信效率。
@@ -104,12 +116,13 @@ print(f"DeepSpeed configuration saved to {deepspeed_config_path}")
 # --- 3. 模型与分词器加载 ---
 model_name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
 
-# 加载模型：不进行 4-bit 量化，使用 bfloat16 精度（A100通常支持）
-# device_map="auto" 让 Hugging Face Accelerate 自动将模型分发到所有可用 GPU
+# --- 关键修改：强制在CPU上加载模型，避免GPU OOM ---
+# device_map="cpu" 确保所有权重都在CPU上初始化，不占用GPU显存。
+# DeepSpeed 之后会负责将模型参数分片并按需从 CPU 移动到 GPU。
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
     torch_dtype=torch.bfloat16, # 模型加载精度，对于A100建议使用bfloat16以获得更好数值稳定性
-    device_map="auto", # 自动将模型权重分发到所有可用GPU
+    device_map="cpu", # !!! 关键修改：强制在CPU上加载模型
     trust_remote_code=True, # 允许加载自定义模型代码（如 Qwen 架构）
 )
 
