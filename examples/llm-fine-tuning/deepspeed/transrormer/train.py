@@ -1,9 +1,19 @@
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments, Trainer
-from peft import LoraConfig, get_peft_model
+from transformers import (
+    AutoModelForCausalLM, 
+    AutoTokenizer, 
+    TrainingArguments, 
+    Trainer, 
+    HfArgumentParser,
+    BitsAndBytesConfig
+)
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from datasets import load_dataset
 import os
-import json # 用于加载 DeepSpeed 配置
+import json
+from dataclasses import dataclass, field
+from typing import Optional
+import bitsandbytes as bnb
 
 # --- 1. 环境与日志设置 ---
 # 设置一些环境变量，优化分布式训练（可选但推荐）
@@ -12,7 +22,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false" # 避免 Hugging Face Tokenizers 
 # --- 关键修改：针对 ROCm 内存优化和多 GPU 调试 ---
 # PYTORCH_HIP_ALLOC_CONF：解决 HIP OOM 错误中提到的内存碎片化问题。
 # "expandable_segments:True" 允许 PyTorch 的 HIP 后端使用可扩展的内存段，提高内存利用率。
-os.environ["PYTORCH_HIP_ALLOC_CONF"] = "expandable_segments:True"
+os.environ["PYTORCH_HIP_ALLOC_CONF"] = "garbage_collection_threshold:0.8,max_split_size_mb:512,expandable_segments:True"
 
 # NCCL_IB_DISABLE：确保 InfiniBand 开启（如果您的硬件支持），对多卡高速互联至关重要。
 # 设置为 "0" 明确启用 InfiniBand。
@@ -23,141 +33,122 @@ os.environ["NCCL_IB_DISABLE"] = "0"
 os.environ["NCCL_DEBUG"] = "INFO"
 # os.environ["NCCL_P2P_DISABLE"] = "1" # 通常不需要禁用点对点通信，除非有特定问题
 
-
-# --- 2. DeepSpeed 配置定义 ---
-# DeepSpeed 配置定义为 Python 字典，之后会转换为 JSON 字符串并保存到文件
-deepspeed_config = {
-    # 全局训练批次大小设置
-    # 'auto': DeepSpeed 会根据 'train_micro_batch_size_per_gpu'、
-    # 'gradient_accumulation_steps' 和 GPU 数量自动计算全局训练批次大小。
-    # 这是模型在一个优化步骤中处理的样本总数。
-    "train_batch_size": "auto",
-
-    # 每张 GPU 上的微批次大小
-    # 'auto': DeepSpeed 会根据 'gradient_accumulation_steps' 和 'train_batch_size' 自动优化。
-    # 也可以在 TrainingArguments 中通过 per_device_train_batch_size 显式设置。
-    # 这是实际放入 GPU 显存的最小批次单位。
-    "train_micro_batch_size_per_gpu": "auto",
-
-    # 梯度累积步数
-    # 'auto': DeepSpeed 会自动管理。
-    # 在执行一次优化器步骤（即更新模型权重）之前，累积梯度的步数。
-    # 通过在多次微批次前向/后向传播后才执行一次权重更新，可以模拟更大的总批次大小，
-    # 同时降低单次 GPU 显存需求。
-    "gradient_accumulation_steps": "auto",
-
-    # 优化器配置
-    "optimizer": {
-        "type": "AdamW", # 优化器类型，AdamW 是 Adam 优化器的变体，适合 Transformer 模型
-        "params": {
-            "lr": 2e-5,        # 初始学习率，大型语言模型微调常见起始点
-            "betas": [0.9, 0.95], # Adam 优化器的动量参数，分别对应一阶矩和二阶矩估计
-            "eps": 1e-8,       # 防止除零错误的小值
-            "weight_decay": 0.01 # 权重衰减（L2 正则化）系数，防止模型过拟合
-        }
-    },
-
-    # 学习率调度器配置
-    "scheduler": {
-        "type": "WarmupLR", # 调度器类型，WarmupLR 表示学习率会先从0逐渐预热到最大值
-        "params": {
-            "warmup_min_lr": 0,    # 预热阶段的起始学习率
-            "warmup_max_lr": 2e-5, # 预热阶段的最终学习率（通常是最大学习率）
-            "warmup_num_steps": 100 # 预热阶段持续的步数
-        }
-    },
-
-    # 混合精度训练配置
-    "fp16": {
-        "enabled": True, # 启用混合精度训练（FP16）。这是现代 LLM 训练标配，显著减少显存并加速计算。
-        "auto_cast": False # 通常与 PyTorch 的 torch.cuda.amp.autocast 配合使用，这里 DeepSpeed 自身管理。
-    },
-
-    # DeepSpeed ZeRO (Zero Redundancy Optimizer) 优化策略
-    "zero_optimization": {
-        "stage": 2, # ZeRO 阶段。
-                    # Stage 1: 只对优化器状态（optimizer states）进行分片。
-                    # Stage 2: 对优化器状态和梯度（gradients）进行分片。每张 GPU 负责存储其分配到的优化器状态和梯度。
-                    # Stage 3: 对优化器状态、梯度和模型参数（parameters）进行分片。
-                    # 建议：对于 8张64GB GPU 的配置，Stage 2 通常是最佳选择，平衡了内存效率和通信效率。
-        "offload_optimizer": { # 将优化器状态卸载到 CPU
-            "device": "cpu", # 将优化器状态存储在 CPU 内存中，显著节省 GPU 显存。
-            "pin_memory": True # 启用锁页内存，加速 CPU 和 GPU 之间的数据传输。
-        },
-        "offload_param": { # 将模型参数卸载到 CPU
-             "device": "cpu", # 在 Stage 3 下，模型参数会卸载到 CPU。在 Stage 2 下，此配置通常不发挥作用，但为了兼容性保留。
-             "pin_memory": True # 启用锁页内存。
-        },
-        "overlap_comm": True, # 启用通信和计算重叠，隐藏分布式通信的延迟。
-        "contiguous_gradients": True, # 将梯度存储在连续内存中，优化内存访问和通信效率。
-        "sub_group_size": 1e9, # 主要用于 ZeRO-Stage3。定义参数分片时子组大小。
-        "reduce_bucket_size": 5e8, # 用于梯度规约（gradient reduction）的桶大小。
-        "stage3_prefetch_bucket_size": 5e8, # 主要用于 ZeRO-Stage3。预取桶的大小。
-        "stage3_param_persistence_threshold": 1e4, # 主要用于 ZeRO-Stage3。小于此阈值的参数不会被卸载。
-        "stage3_max_live_parameters": 1e9, # 主要用于 ZeRO-Stage3。允许的最大实时参数量。
-        "stage3_max_reuse_distance": 1e9, # 主要用于 ZeRO-Stage3。参数重用的最大距离。
-        "stage3_gather_fp16_weights_on_model_save": True # 主要用于 ZeRO-Stage3。保存模型时是否将 FP16 权重收集到一起。
-    },
-
-    "gradient_clipping": 1.0, # 梯度裁剪阈值，防止训练过程中梯度爆炸。
-    "wall_clock_breakdown": False, # 是否打印详细的时间分析。调试时可设为 True。
-    "checkpoint": {
-        "tag": "DeepSeek-R1-Distill-Qwen-32B_fine-tuned" # DeepSpeed 检查点的标签或前缀。
-    }
-}
-
-# 将 DeepSpeed 配置保存到 ds_config.json 文件
-deepspeed_config_path = "ds_config.json"
-with open(deepspeed_config_path, "w") as f:
-    json.dump(deepspeed_config, f, indent=4)
-print(f"DeepSpeed configuration saved to {deepspeed_config_path}")
+# HSA_ENABLE_SDMA：确保 AMD GPU 的 SDMA 功能启用，对多卡高速互联至关重要。
+# 设置为 "0" 明确禁用 SDMA。
+os.environ["HSA_ENABLE_SDMA"] = "0"
 
 
-# --- 3. 模型与分词器加载 ---
-model_name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
+# --- 2. 参数定义 ---
+@dataclass
+class ModelArguments:
+    """
+    与模型和 LoRA 配置相关的参数
+    """
+    model_name_or_path: str = field(
+        default="deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
+        metadata={"help": "预训练模型的路径或 Hugging Face Hub 上的模型标识符"}
+    )
+    load_in_4bit: bool = field(
+        default=True,
+        metadata={"help": "是否使用4bit量化加载模型"}
+    )
+    load_in_8bit: bool = field(
+        default=False,
+        metadata={"help": "是否使用8bit量化加载模型"}
+    )
+    lora_r: int = field(default=16, metadata={"help": "LoRA 的秩 (rank)"})
+    lora_alpha: int = field(default=32, metadata={"help": "LoRA 的 alpha 缩放因子"})
+    lora_dropout: float = field(default=0.05, metadata={"help": "LoRA 层的 dropout 概率"})
+    lora_target_modules: list[str] = field(
+        default_factory=lambda: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+        metadata={"help": "要应用 LoRA 的模块列表"}
+    )
 
-# --- 关键修改：强制在CPU上加载模型，避免GPU OOM ---
-# device_map="cpu" 确保所有权重都在CPU上初始化，不占用GPU显存。
-# DeepSpeed 之后会负责将模型参数分片并按需从 CPU 移动到 GPU。
-model = AutoModelForCausalLM.from_pretrained(
-    model_name,
-    torch_dtype=torch.bfloat16, # 模型加载精度，对于A100建议使用bfloat16以获得更好数值稳定性
-    device_map="cpu", # !!! 关键修改：强制在CPU上加载模型
-    trust_remote_code=True, # 允许加载自定义模型代码（如 Qwen 架构）
-)
+@dataclass
+class DataArguments:
+    """
+    与数据处理相关的参数
+    """
+    dataset_name: str = field(
+        default="databricks/databricks-dolly-15k", 
+        metadata={"help": "要使用的数据集名称 (通过 datasets 库)"}
+    )
+    max_seq_length: int = field(
+        default=2048,
+        metadata={"help": "Tokenization 后的最大总输入序列长度"}
+    )
 
-# 加载分词器
-tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-# 对于某些模型（如 Qwen），需要手动设置 pad_token
-if tokenizer.pad_token is None:
-    tokenizer.pad_token = tokenizer.eos_token
-tokenizer.padding_side = "right" # 对于因果语言模型，通常将 padding 放在右侧，避免影响注意力机制
+def find_all_linear_names(model):
+    """找出所有需要量化的线性层名称"""
+    cls = bnb.nn.Linear4bit if model_args.load_in_4bit else bnb.nn.Linear8bitLt
+    lora_module_names = set()
+    for name, module in model.named_modules():
+        if isinstance(module, cls):
+            names = name.split('.')
+            lora_module_names.add(names[-1])
+    return list(lora_module_names)
 
+def main():
+    # --- 3. 解析命令行参数 ---
+    parser = HfArgumentParser((ModelArguments, DataArguments, TrainingArguments))
+    model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
-# --- 4. 配置 LoRA 适配器 ---
-# 强烈推荐开启梯度检查点，它能显著减少显存使用，同时对计算速度影响较小
-model.gradient_checkpointing_enable()
+    # --- 5. 模型与分词器加载 ---
+    print(f"Loading model: {model_args.model_name_or_path}")
+    
+    # 量化配置
+    quantization_config = None
+    if model_args.load_in_4bit:
+        quantization_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_compute_dtype=torch.bfloat16,
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_quant_type="nf4",
+        )
+    elif model_args.load_in_8bit:
+        quantization_config = BitsAndBytesConfig(
+            load_in_8bit=True,
+            bnb_8bit_compute_dtype=torch.bfloat16,
+        )
+    
+    # 加载模型
+    model = AutoModelForCausalLM.from_pretrained(
+        model_args.model_name_or_path,
+        quantization_config=quantization_config,
+        trust_remote_code=True,
+        use_cache=False,  # 训练时禁用 KV cache 以节省显存
+    )
+    
+    # 准备量化训练
+    if model_args.load_in_4bit or model_args.load_in_8bit:
+        model = prepare_model_for_kbit_training(model)
+    
+    tokenizer = AutoTokenizer.from_pretrained(model_args.model_name_or_path, trust_remote_code=True)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.padding_side = "right"
 
-# LoRA (Low-Rank Adaptation) 配置
-lora_config = LoraConfig(
-    r = 16, # LoRA 的秩（rank）。决定了适配器矩阵的维度和表达能力，通常 8, 16, 32。
-    lora_alpha = 32, # LoRA 的缩放因子，通常设置为 r 的两倍。
-    # target_modules 需要根据 DeepSeek-R1-Distill-Qwen-32B 模型的实际架构来确定，
-    # 通常是注意力机制中的线性投影层 (e.g., Q, K, V, O 投影) 以及 MLP 中的线性层。
-    target_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
-    lora_dropout = 0.05, # LoRA 层的 dropout 概率，用于防止过拟合。
-    bias = "none", # 决定是否微调偏置项。 "none" 表示不微调偏置项。
-    task_type = "CAUSAL_LM", # 任务类型，这里是因果语言模型（即生成文本）。
-)
-model = get_peft_model(model, lora_config)
+    # --- 6. 配置 LoRA 适配器 ---
+    model.gradient_checkpointing_enable()
+    model.enable_input_require_grads()
+    
+    # 自动发现需要量化的模块
+    if model_args.load_in_4bit or model_args.load_in_8bit:
+        model_args.lora_target_modules = find_all_linear_names(model)
+    
+    lora_config = LoraConfig(
+        r=model_args.lora_r,
+        lora_alpha=model_args.lora_alpha,
+        target_modules=model_args.lora_target_modules,
+        lora_dropout=model_args.lora_dropout,
+        bias="none",
+        task_type="CAUSAL_LM",
+    )
+    model = get_peft_model(model, lora_config)
+    model.print_trainable_parameters()
 
-# 打印可训练参数量，方便验证 LoRA 配置是否生效
-model.print_trainable_parameters()
-
-
-# --- 5. 准备数据集 ---
-# 定义 Prompt 模板，用于将原始数据集格式化为模型训练所需的输入
-alpaca_prompt = """Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
+    # --- 7. 准备数据集 ---
+    alpaca_prompt = """Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
 
 ### Instruction:
 {}
@@ -167,92 +158,55 @@ alpaca_prompt = """Below is an instruction that describes a task, paired with an
 
 ### Response:
 {}"""
+    
+    print(f"Loading dataset: {data_args.dataset_name}")
+    dataset = load_dataset(data_args.dataset_name, split="train")
 
-# 从 Hugging Face Datasets Hub 加载 Dolly 2.0 数据集
-dataset = load_dataset("databricks/dolly-v2-15k", split="train")
+    def formatting_prompts_func(examples):
+        instructions = examples["instruction"]
+        inputs       = examples["context"]
+        outputs      = examples["response"]
+        texts = []
+        for instruction, input_text, output in zip(instructions, inputs, outputs):
+            if input_text:
+                text = alpaca_prompt.format(instruction, input_text, output) + tokenizer.eos_token
+            else:
+                text = f"Below is an instruction that describes a task. Write a response that appropriately completes the request.\n\n### Instruction:\n{instruction}\n\n### Response:\n{output}" + tokenizer.eos_token
+            texts.append(text)
+        return {"text": texts}
 
-# 定义格式化函数，将原始数据转换为模型训练所需的 Prompt-Response 格式
-def formatting_prompts_func(examples):
-    instructions = examples["instruction"]
-    inputs       = examples["context"] # Dolly 2.0 数据集中对应 'input' 的字段是 'context'
-    outputs      = examples["response"]
-    texts = []
-    for instruction, input_text, output in zip(instructions, inputs, outputs):
-        if input_text: # 如果有输入上下文，则使用包含输入的模板
-            text = alpaca_prompt.format(instruction, input_text, output) + tokenizer.eos_token
-        else: # 如果没有输入上下文，则使用只有指令和响应的模板
-            text = f"Below is an instruction that describes a task. Write a response that appropriately completes the request.\n\n### Instruction:\n{instruction}\n\n### Response:\n{output}" + tokenizer.eos_token
-        texts.append(text)
-    return { "text" : texts, }
+    dataset = dataset.map(formatting_prompts_func, batched=True)
 
-# 应用格式化函数到数据集，将原始数据转换为文本格式
-dataset = dataset.map(formatting_prompts_func, batched = True,)
+    def tokenize_function(examples):
+        return tokenizer(
+            examples["text"], 
+            truncation=True, 
+            max_length=data_args.max_seq_length, 
+            padding="max_length"
+        )
 
-# Tokenize 数据集：将文本转换为模型可理解的 token ID
-def tokenize_function(examples):
-    # truncation=True: 截断超过 max_length 的序列
-    # max_length=2048: 设置最大序列长度。DeepSeek-R1-Distill-Qwen-32B 通常支持 2048 或 4096。
-    #                  根据您的数据平均长度和显存情况调整。
-    # padding="max_length": 将所有序列填充到 max_length。
-    return tokenizer(examples["text"], truncation=True, max_length=2048, padding="max_length")
+    tokenized_dataset = dataset.map(
+        tokenize_function, 
+        batched=True, 
+        remove_columns=["instruction", "context", "response", "category", "text"]
+    )
 
-# 对格式化后的数据集进行 tokenization，并移除原始文本列
-tokenized_dataset = dataset.map(tokenize_function, batched=True, remove_columns=["instruction", "context", "response", "category", "text"])
+    # --- 8. 创建 Trainer 并开始训练 ---
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=tokenized_dataset,
+        tokenizer=tokenizer,
+    )
 
+    print(f"Starting training on {training_args.world_size} GPUs...")
+    trainer.train()
 
-# --- 6. 配置训练参数 (transformers.TrainingArguments) ---
-training_args = TrainingArguments(
-    output_dir="./fine_tuned_model", # 训练输出目录，保存检查点和日志
-    num_train_epochs=3, # 训练轮数。通常 3-5 轮是常见起点。
-    per_device_train_batch_size=4, #!!! 每张 GPU 上的微批次大小。对于 8x64G 卡，可以尝试 4-8，甚至更大。
-                                   #    需要根据实际显存使用率和性能来调整。
-    gradient_accumulation_steps=2, #!!! 梯度累积步数。在执行一次优化器更新前，累积梯度的次数。
-                                   #    用于模拟更大的全局批次大小，例如：
-                                   #    全局批次大小 = num_gpus * per_device_train_batch_size * gradient_accumulation_steps
-                                   #    如果您有 8 张 GPU，每卡 batch_size=4，累积步数=2，则全局批次大小 = 8 * 4 * 2 = 64。
-    learning_rate=2e-5, # 学习率。这是权重更新的步长。
-    weight_decay=0.01, # 权重衰减（L2 正则化）系数，有助于防止过拟合。
-    fp16=True, # 启用 FP16 混合精度训练。如果模型加载时使用的是 bfloat16，建议这里使用 bf16=True。
-               # 对于 A100，bfloat16 更好，但 fp16 兼容性更广。
-    logging_steps=10, # 每隔多少步记录一次训练日志（包括损失、学习率等）。
-    save_steps=500, # 每隔多少步保存一次模型检查点。
-    save_total_limit=2, # 最多保存的检查点数量。旧的检查点会被删除。
-    overwrite_output_dir=True, # 如果输出目录已存在，则覆盖其内容。
-    deepspeed=deepspeed_config_path, #!!! 指向 DeepSpeed 配置文件的路径。
-    report_to="none", # 不使用任何训练报告工具。可选值有 "tensorboard", "wandb" 等。
-    # 额外分布式训练参数，推荐用于多卡训练以提高效率和稳定性
-    dataloader_drop_last=True, # 确保分布式训练的每个 GPU 上的批次大小一致，避免数据不均。
-    ddp_find_unused_parameters=False, # 优化分布式训练效率，避免在分布式数据并行中寻找未使用的参数。
-    group_by_length=True, # 动态批次填充。将长度相近的样本分到同一个批次，减少 padding 造成的计算浪费。
-    logging_first_step=True, # 记录第一步的训练日志。
-    optim="adamw_torch", # 明确使用 PyTorch 默认的 AdamW 优化器实现。
-    lr_scheduler_type="cosine", # 学习率调度器类型，余弦衰减（cosine decay）是常见的选择。
-    warmup_steps=100, # 学习率预热步数。在训练初期逐渐增加学习率，帮助模型稳定。
-)
+    # --- 9. 保存微调后的模型 ---
+    print(f"Saving final LoRA model to {training_args.output_dir}")
+    trainer.model.save_pretrained(training_args.output_dir)
+    tokenizer.save_pretrained(training_args.output_dir)
+    print("Training complete.")
 
-# --- 7. 创建 Trainer 并开始训练 ---
-trainer = Trainer(
-    model=model,
-    args=training_args,
-    train_dataset=tokenized_dataset, # 使用 Tokenized 后的数据集进行训练
-    tokenizer=tokenizer, # 必须传递 tokenizer，用于保存模型和生成文本
-)
-
-print(f"Starting training on {torch.cuda.device_count()} GPUs...")
-trainer.train()
-
-# --- 8. 保存微调后的模型 ---
-# 保存 LoRA 适配器权重。这些权重是微调后的增量部分，体积很小。
-# 加载时，将 LoRA 权重与原始大模型结合即可使用。
-trainer.model.save_pretrained("./final_lora_model")
-tokenizer.save_pretrained("./final_lora_model")
-
-print("LoRA adapters and tokenizer saved to ./final_lora_model")
-
-# 如果您希望保存合并 LoRA 权重到原始大模型后的完整模型，可以取消注释以下代码：
-# 警告：合并后的模型会很大 (32B 半精度模型约占 64GB 磁盘空间)，
-# 且需要足够大的 CPU 内存来完成合并过程。
-# model_to_save = trainer.model.base_model.merge_and_unload()
-# model_to_save.save_pretrained("./merged_full_model")
-# tokenizer.save_pretrained("./merged_full_model")
-# print("Merged full model and tokenizer saved to ./merged_full_model")
+if __name__ == "__main__":
+    main()
