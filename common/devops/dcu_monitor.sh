@@ -473,7 +473,7 @@ main() {
         stop_spinner
 
         # 互联带宽测试独立于spinner，因为它有自己的提示信息且耗时很长
-                get_interconnect_bandwidth
+        get_interconnect_bandwidth
 
         # 渲染输出
         if "$WATCH_MODE"; then clear; fi

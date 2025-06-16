@@ -341,3 +341,7 @@ common/dcu/metrics/__pycache__/
 common/dcu/metrics/utils/__pycache__/
 common/dcu/metrics/metrics/__pycache__/
 common/dcu/metrics/metrics/utils/__pycache__/
+saves/DeepSeek-R1-32B-Distill/lora/train_2025-06-15-09-23-48/running_log.txt
+cache/user_config.yaml
+saves/DeepSeek-R1-32B-Distill/lora/train_2025-06-15-09-23-48/llamaboard_config.yaml
+saves/DeepSeek-R1-32B-Distill/lora/train_2025-06-15-09-23-48/training_args.yaml

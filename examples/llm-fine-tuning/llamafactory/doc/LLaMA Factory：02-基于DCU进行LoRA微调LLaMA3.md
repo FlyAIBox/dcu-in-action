@@ -1589,10 +1589,8 @@ def _raw_device_count_amdsmi() -> int:
 
    如果 pynvml 仍可被 Python 导入，请在 Python 解释器中执行以下命令找到其主文件路径：
 
-   ```Python
-   import pynvml
-   print(pynvml.__file__)
-   exit()
+   ```python
+    python -c "import pynvml; print(pynvml.__file__)"
    ```
 2. **删除文件**：
 
