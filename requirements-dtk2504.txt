@@ -13,6 +13,8 @@
 # PyTorch生态系统 - DCU优化版本
 # torch==2.4.1+das.opt2.dtk2504
 https://download.sourcefind.cn:65024/file/4/pytorch/DAS1.5/torch-2.4.1+das.opt2.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl
+# torchvision==0.19.1+das.opt2.dtk2504
+https://download.sourcefind.cn:65024/file/4/vision/DAS1.5/torchvision-0.19.1+das.opt2.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl
 transformers==4.45.0
 tokenizers==0.20.3
 datasets==3.2.0
