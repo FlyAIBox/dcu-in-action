@@ -1,0 +1,252 @@
+# 海光DCU K100-AI大模型推理基准测试配置
+# 版本: v2.0
+
+# 全局配置
+global_config:
+  # 模型基础路径
+  model_base_path: "/data/models"
+  
+  # 结果输出路径
+  results_path: "./results"
+  
+  # 日志路径
+  logs_path: "./logs"
+  
+  # 默认测试参数
+  default_params:
+    temperature: 0.7
+    top_p: 0.9
+    max_tokens: 4096
+    test_duration: 120  # 秒
+    warmup_requests: 10
+
+# 测试用例定义
+test_cases:
+  # DeepSeek-7B 单卡测试 - vLLM
+  - name: "deepseek-7b-single-vllm"
+    model_name: "deepseek-7b"
+    model_path: "${model_base_path}/deepseek-llm-7b-base"
+    framework: "vllm"
+    gpu_count: 1
+    max_tokens: 4096
+    temperature: 0.7
+    top_p: 0.9
+    input_lengths: [64, 128, 256, 512, 1024]
+    output_lengths: [64, 128, 256, 512]
+    concurrency_levels: [1, 2, 4, 8, 16, 32]
+    test_duration: 120
+    warmup_requests: 10
+    port: 8000
+    
+  # DeepSeek-7B 单卡测试 - SGLang
+  - name: "deepseek-7b-single-sglang"
+    model_name: "deepseek-7b"
+    model_path: "${model_base_path}/deepseek-llm-7b-base"
+    framework: "sglang"
+    gpu_count: 1
+    max_tokens: 4096
+    temperature: 0.7
+    top_p: 0.9
+    input_lengths: [64, 128, 256, 512, 1024]
+    output_lengths: [64, 128, 256, 512]
+    concurrency_levels: [1, 2, 4, 8, 16, 32]
+    test_duration: 120
+    warmup_requests: 10
+    port: 8001
+    
+  # DeepSeek-7B 单卡测试 - Xinference
+  - name: "deepseek-7b-single-xinference"
+    model_name: "deepseek-7b"
+    model_path: "${model_base_path}/deepseek-llm-7b-base"
+    framework: "xinference"
+    gpu_count: 1
+    max_tokens: 4096
+    temperature: 0.7
+    top_p: 0.9
+    input_lengths: [64, 128, 256, 512]
+    output_lengths: [64, 128, 256]
+    concurrency_levels: [1, 2, 4, 8, 16]
+    test_duration: 120
+    warmup_requests: 10
+    port: 8002
+    
+  # DeepSeek-7B 8卡测试 - vLLM
+  - name: "deepseek-7b-multi-vllm"
+    model_name: "deepseek-7b"
+    model_path: "${model_base_path}/deepseek-llm-7b-base"
+    framework: "vllm"
+    gpu_count: 8
+    max_tokens: 4096
+    temperature: 0.7
+    top_p: 0.9
+    input_lengths: [64, 128, 256, 512, 1024]
+    output_lengths: [64, 128, 256, 512]
+    concurrency_levels: [8, 16, 32, 64, 128, 256]
+    test_duration: 180
+    warmup_requests: 20
+    port: 8010
+    
+  # DeepSeek-7B 8卡测试 - SGLang
+  - name: "deepseek-7b-multi-sglang"
+    model_name: "deepseek-7b"
+    model_path: "${model_base_path}/deepseek-llm-7b-base"
+    framework: "sglang"
+    gpu_count: 8
+    max_tokens: 4096
+    temperature: 0.7
+    top_p: 0.9
+    input_lengths: [64, 128, 256, 512, 1024]
+    output_lengths: [64, 128, 256, 512]
+    concurrency_levels: [8, 16, 32, 64, 128, 256]
+    test_duration: 180
+    warmup_requests: 20
+    port: 8011
+    
+  # Qwen-7B 单卡测试 - vLLM
+  - name: "qwen-7b-single-vllm"
+    model_name: "qwen-7b"
+    model_path: "${model_base_path}/Qwen-7B"
+    framework: "vllm"
+    gpu_count: 1
+    max_tokens: 4096
+    temperature: 0.7
+    top_p: 0.9
+    input_lengths: [64, 128, 256, 512, 1024]
+    output_lengths: [64, 128, 256, 512]
+    concurrency_levels: [1, 2, 4, 8, 16, 32]
+    test_duration: 120
+    warmup_requests: 10
+    port: 8020
+    
+  # Qwen-7B 单卡测试 - SGLang
+  - name: "qwen-7b-single-sglang"
+    model_name: "qwen-7b"
+    model_path: "${model_base_path}/Qwen-7B"
+    framework: "sglang"
+    gpu_count: 1
+    max_tokens: 4096
+    temperature: 0.7
+    top_p: 0.9
+    input_lengths: [64, 128, 256, 512, 1024]
+    output_lengths: [64, 128, 256, 512]
+    concurrency_levels: [1, 2, 4, 8, 16, 32]
+    test_duration: 120
+    warmup_requests: 10
+    port: 8021
+    
+  # Qwen-7B 8卡测试 - vLLM
+  - name: "qwen-7b-multi-vllm"
+    model_name: "qwen-7b"
+    model_path: "${model_base_path}/Qwen-7B"
+    framework: "vllm"
+    gpu_count: 8
+    max_tokens: 4096
+    temperature: 0.7
+    top_p: 0.9
+    input_lengths: [64, 128, 256, 512, 1024]
+    output_lengths: [64, 128, 256, 512]
+    concurrency_levels: [8, 16, 32, 64, 128, 256]
+    test_duration: 180
+    warmup_requests: 20
+    port: 8030
+
+# 性能优化配置
+optimization_config:
+  # vLLM优化参数
+  vllm:
+    gpu_memory_utilization: 0.9
+    swap_space: 16
+    max_batch_total_tokens: 16384
+    max_batch_prefill_tokens: 8192
+    attention_backend: "FLASHINFER"
+    
+  # SGLang优化参数
+  sglang:
+    mem_fraction_static: 0.8
+    tp_size: 1
+    max_running_requests: 256
+    
+  # Xinference优化参数
+  xinference:
+    max_tokens: 4096
+    n_gpu_layers: -1
+
+# 监控配置
+monitoring_config:
+  # 监控间隔(秒)
+  monitor_interval: 5
+  
+  # 保存间隔(秒)
+  save_interval: 60
+  
+  # 告警阈值
+  alert_thresholds:
+    gpu_temperature: 85  # 温度阈值 (°C)
+    gpu_power: 300       # 功耗阈值 (W)
+    gpu_memory: 95       # 显存使用率阈值 (%)
+    cpu_utilization: 90  # CPU使用率阈值 (%)
+    memory_utilization: 90  # 内存使用率阈值 (%)
+    disk_usage: 90       # 磁盘使用率阈值 (%)
+
+# 报告配置
+report_config:
+  # 报告格式
+  formats: ["json", "csv", "html", "pdf"]
+  
+  # 包含的图表
+  charts:
+    - "throughput_vs_concurrency"
+    - "latency_distribution"
+    - "resource_utilization"
+    - "power_efficiency"
+    - "scaling_efficiency"
+    
+  # 比较基准
+  baseline:
+    framework: "vllm"
+    model: "deepseek-7b"
+    gpu_count: 1
+    
+# 测试场景组合
+test_scenarios:
+  # 快速测试 (用于开发调试)
+  quick_test:
+    input_lengths: [128]
+    output_lengths: [128]
+    concurrency_levels: [1, 4, 8]
+    test_duration: 60
+    
+  # 标准测试 (用于常规评估)
+  standard_test:
+    input_lengths: [64, 128, 256, 512]
+    output_lengths: [64, 128, 256]
+    concurrency_levels: [1, 2, 4, 8, 16, 32]
+    test_duration: 120
+    
+  # 深度测试 (用于详细分析)
+  comprehensive_test:
+    input_lengths: [64, 128, 256, 512, 1024, 2048]
+    output_lengths: [64, 128, 256, 512, 1024]
+    concurrency_levels: [1, 2, 4, 8, 16, 32, 64, 128]
+    test_duration: 300
+    
+  # 压力测试 (用于性能上限探测)
+  stress_test:
+    input_lengths: [128]
+    output_lengths: [128]
+    concurrency_levels: [1, 4, 8, 16, 32, 64, 128, 256, 512]
+    test_duration: 180
+
+# 环境变量配置
+environment:
+  # ROCm环境变量
+  HIP_VISIBLE_DEVICES: "0,1,2,3,4,5,6,7"
+  ROCM_PATH: "/opt/rocm"
+  
+  # 性能优化环境变量
+  VLLM_ATTENTION_BACKEND: "FLASHINFER"
+  OMP_NUM_THREADS: "8"
+  CUDA_LAUNCH_BLOCKING: "0"
+  
+  # 内存管理
+  PYTORCH_CUDA_ALLOC_CONF: "max_split_size_mb:512" 
