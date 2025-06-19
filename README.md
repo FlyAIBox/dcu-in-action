@@ -54,12 +54,7 @@ DCU-in-Action 是一个面向生产环境的海光DCU加速卡完整解决方案
 
 ### DCU大模型微调
 1. [实战 LLaMA Factory：在国产DCU上高效微调 Llama 3 模型](https://mp.weixin.qq.com/s/C5hUzbXbKbfT6GNFak01gQ)
-2. **🚀 [DCU k100-AI专用微调指南](examples/llm-fine-tuning/llamafactory/)** - 针对海光k100-AI加速卡优化的完整大模型微调解决方案
-   - **[5分钟快速入门](examples/llm-fine-tuning/llamafactory/QUICKSTART_DCU_K100_AI.md)** - 零基础快速上手
-   - **[Easy Dataset + LLaMA Factory完整教程](examples/llm-fine-tuning/llamafactory/doc/LLaMA%20Factory：03-Easy%20Dataset%20让大模型高效学习领域知识.md)** - 从数据生成到模型微调的全流程
-   - **[DCU k100-AI优化配置](examples/llm-fine-tuning/llamafactory/configs/dcu_k100_ai_optimal.yaml)** - 性能调优参数配置
-   - **[自动环境配置脚本](examples/llm-fine-tuning/llamafactory/scripts/dcu_k100_ai_setup.sh)** - 一键配置开发环境
-   - **[性能测试工具](examples/llm-fine-tuning/llamafactory/scripts/test_dcu_performance.py)** - DCU性能基准测试
+2. [Easy Dataset + LLaMA Factory完整教程](https://mp.weixin.qq.com/s/RL-bUhghDK-J__UuRNQzbg)
 
 ### DCU大模型推理
 1.[实战Xinference：打造高性能私有AI推理服务](https://mp.weixin.qq.com/s/pZXOadsvZHvqcNLK3JcUPQ)
@@ -119,7 +114,7 @@ graph TB
 
 | 层级 | 技术组件 | 版本要求 | 用途 |
 |------|----------|----------|------|
-| **硬件层** | 海光DCU Z100/K100/K100-AI/BW100 | - | 加速计算硬件 |
+| **硬件层** | 海光DCU  | Z100/K100/K100-AI/BW100 | 加速计算硬件 |
 | **驱动层** | DCU Runtime | ≥ 5.0 | 硬件驱动和运行时 |
 | **计算框架** | PyTorch | ≥ 2.3.0 | 深度学习框架 |
 | **模型库** | Transformers | ≥ 4.45.0 | 预训练模型库 |
