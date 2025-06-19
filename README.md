@@ -50,6 +50,7 @@ DCU-in-Action 是一个面向生产环境的海光DCU加速卡完整解决方案
 ### DCU基本介绍
 1. [国产"芯"力量：深度解析海光DCU加速卡](https://mp.weixin.qq.com/s/l8PO6bXYbV6-QaZKkdY2Iw)
 2. [善事需利器：海光DCU常用工具深度解析](https://mp.weixin.qq.com/s/5_1F7BL0OGzWcybMreHhUQ)
+3. [DCU/AMD加速卡监控：从命令行到可视化面板](https://mp.weixin.qq.com/s/43bnv64T2R9QSyCEh_n1OQ)
 
 ### DCU大模型微调
 1. [实战 LLaMA Factory：在国产DCU上高效微调 Llama 3 模型](https://mp.weixin.qq.com/s/C5hUzbXbKbfT6GNFak01gQ)
@@ -59,13 +60,17 @@ DCU-in-Action 是一个面向生产环境的海光DCU加速卡完整解决方案
    - **[DCU k100-AI优化配置](examples/llm-fine-tuning/llamafactory/configs/dcu_k100_ai_optimal.yaml)** - 性能调优参数配置
    - **[自动环境配置脚本](examples/llm-fine-tuning/llamafactory/scripts/dcu_k100_ai_setup.sh)** - 一键配置开发环境
    - **[性能测试工具](examples/llm-fine-tuning/llamafactory/scripts/test_dcu_performance.py)** - DCU性能基准测试
+
+### DCU大模型推理
+1.[实战Xinference：打造高性能私有AI推理服务](https://mp.weixin.qq.com/s/pZXOadsvZHvqcNLK3JcUPQ)
+
 ---
 ## 🏗️ 项目架构
 
 ```mermaid
 graph TB
     subgraph "硬件层"
-        A[海光DCU BW1000/K100-AI/K100/Z100L/Z100]
+        A[海光DCU BW100/K100-AI/K100/Z100L/Z100]
     end
     
     subgraph "运行时层"
@@ -114,15 +119,15 @@ graph TB
 
 | 层级 | 技术组件 | 版本要求 | 用途 |
 |------|----------|----------|------|
-| **硬件层** | 海光DCU Z100/K100/K100-AI/BW1000 | - | 加速计算硬件 |
+| **硬件层** | 海光DCU Z100/K100/K100-AI/BW100 | - | 加速计算硬件 |
 | **驱动层** | DCU Runtime | ≥ 5.0 | 硬件驱动和运行时 |
-| **计算框架** | PyTorch | ≥ 2.1 | 深度学习框架 |
-| **模型库** | Transformers | ≥ 4.30 | 预训练模型库 |
-| **推理引擎** | vLLM | ≥ 0.6.2 | 高性能推理服务 |
-| **微调框架** | LlamaFactory | ≥ 0.6.0 | 模型微调工具 |
+| **计算框架** | PyTorch | ≥ 2.3.0 | 深度学习框架 |
+| **模型库** | Transformers | ≥ 4.45.0 | 预训练模型库 |
+| **推理引擎** | vLLM | ≥ 0.8.5 | 高性能推理服务 |
+| **微调框架** | LlamaFactory | ≥ 0.9.2 | 模型微调工具 |
 | **科学计算** | NumPy/SciPy | Latest | 数值计算库 |
-| **容器化** | Docker | ≥ 20.10 | 容器化部署 |
-| **容器编排** | K8s | ≥ 1.22 | 容器编排和调度 |
+| **容器化** | Docker | ≥ 28.1.1 | 容器化部署 |
+| **容器编排** | K8s | ≥ 1.26 | 容器编排和调度 |
 ---
 
 ## 📁 项目结构

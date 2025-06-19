@@ -80,6 +80,7 @@ pydantic==2.10.6
 # 系统监控
 psutil==7.0.0
 prometheus-client==0.22.0
+swanlab==0.6.4
 
 # 日志管理
 rich==14.0.0
