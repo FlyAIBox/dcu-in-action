@@ -55,6 +55,7 @@ DCU-in-Action 是一个面向生产环境的海光DCU加速卡完整解决方案
 ### DCU大模型微调
 1. [实战 LLaMA Factory：在国产DCU上高效微调 Llama 3 模型](https://mp.weixin.qq.com/s/C5hUzbXbKbfT6GNFak01gQ)
 2. [Easy Dataset + LLaMA Factory完整教程](https://mp.weixin.qq.com/s/RL-bUhghDK-J__UuRNQzbg)
+3. [DeepSeek 32B+DeepSeed Zero3 高效微调](https://mp.weixin.qq.com/s/IjPw81uogXOJ-akGP-n7wA)
 
 ### DCU大模型推理
 1.[实战Xinference：打造高性能私有AI推理服务](https://mp.weixin.qq.com/s/pZXOadsvZHvqcNLK3JcUPQ)
