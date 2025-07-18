@@ -1,0 +1,64 @@
+ARG BASE_NAME
+ARG IMAGE_NAME
+FROM ${BASE_NAME} as base
+
+FROM ${IMAGE_NAME} as pytorch2.4.1
+LABEL maintainer="chenwch1@sugon.com"
+LABEL dtk-version="dtk-25.04.1"
+ARG SOURCES="-i https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple --trusted-host mirrors.tuna.tsinghua.edu.cn --default-timeout=100 --use-deprecated=legacy-resolver"
+
+
+
+
+# COPY hy_smi.py /opt/dtk/bin/
+
+WORKDIR /tmprm
+RUN  pip3 install --no-cache-dir http://10.16.4.1:8000/customized/pytorch/dtk25.04.1-rc3/torch241_NDHWC-conv/torch-2.4.1%2Bdas.opt1.dtk25041-cp310-cp310-manylinux_2_28_x86_64.whl ${SOURCES} \
+    && pip3 install --no-cache-dir http://10.16.4.1:8000/debug/vision/dtk25.04.1-rc3/torchvision-0.19.1%2Bdas.opt1.dtk25041-cp310-cp310-manylinux_2_28_x86_64.whl ${SOURCES} \
+    && pip3 install --no-cache-dir http://10.16.4.1:8000/debug/apex/dtk25.04.1-rc3/apex-1.4.0%2Bdas.opt1.dtk25041-cp310-cp310-manylinux_2_28_x86_64.whl ${SOURCES} \
+    && pip3 install --no-cache-dir http://10.16.4.1:8000/debug/deepspeed/dtk25.04.1-rc3/deepspeed-0.14.2%2Bdas.opt1.dtk25041-cp310-cp310-manylinux_2_28_x86_64.whl ${SOURCES} \
+    && pip3 install --no-cache-dir http://10.16.4.1:8000/debug/mmcv/dtk25.04.1-rc3/mmcv-2.2.0%2Bdas.opt1.dtk25041-cp310-cp310-manylinux_2_28_x86_64.whl ${SOURCES} \
+    && pip3 install --no-cache-dir http://10.16.4.1:8000/debug/torchaudio/dtk25.04.1-rc3/bak/torchaudio-2.4.1%2Bdas.opt1.dtk25041-cp310-cp310-manylinux_2_28_x86_64.whl ${SOURCES} \
+    && pip3 install --no-cache-dir http://10.16.4.1:8000/debug/triton/dtk25.04.1-rc3/triton-3.0.0%2Bdas.opt1.dtk25041-cp310-cp310-manylinux_2_28_x86_64.whl ${SOURCES} \
+    && pip3 install --no-cache-dir http://10.16.4.1:8000/debug/flash_attn/dtk25.04-0106/das16/flash_attn-2.6.1%2Bdas.opt1.dtk25041-cp310-cp310-manylinux_2_28_x86_64.whl ${SOURCES} \
+    && pip3 install --no-cache-dir http://10.16.4.1:8000/debug/flash_attn/dtk25.04-0106/das16/fused_dense_lib-2.6.1%2Bdas.opt1.dtk25041-cp310-cp310-manylinux_2_28_x86_64.whl ${SOURCES} \
+    && pip3 install --no-cache-dir http://10.16.4.1:8000/debug/flash_attn/dtk25.04-0106/das16/dropout_layer_norm-2.6.1%2Bdas.opt1.dtk25041-cp310-cp310-manylinux_2_28_x86_64.whl ${SOURCES} \
+    && pip3 install --no-cache-dir http://10.16.4.1:8000/debug/flash_attn/dtk25.04-0106/das16/rotary_emb-2.6.1%2Bdas.opt1.dtk25041-cp310-cp310-manylinux_2_28_x86_64.whl ${SOURCES} \
+    && pip3 install --no-cache-dir http://10.16.4.1:8000/debug/flash_attn/dtk25.04-0106/das16/xentropy_cuda_lib-2.6.1%2Bdas.opt1.dtk25041-cp310-cp310-manylinux_2_28_x86_64.whl ${SOURCES} \
+    && pip3 install --no-cache-dir http://10.16.4.1:8000/debug/flashmla/dtk25.04.1-rc3/llvm_0106/flash_mla-1.0.0%2Bdas.opt1.dtk25041-cp310-cp310-manylinux_2_28_x86_64.whl ${SOURCES} \
+    && pip3 install --no-cache-dir http://10.16.4.1:8000/debug/transformer_engine/dtk25.04.1-rc3/transformer_engine-2.2.0%2Bdas.opt1.dtk25041-cp310-cp310-manylinux_2_28_x86_64.whl ${SOURCES} \
+    && pip3 install --no-cache-dir http://10.16.4.1:8000/debug/lmslim/dtk25.04.1-rc3/grouped_gemm-0.5.0%2Bdas.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl ${SOURCES} \
+    && pip3 install --no-cache-dir http://10.16.4.1:8000/debug/lmslim/dtk25.04.1-rc3/grouped_gemm_int4-2025-0620/grouped_gemm_int4-0.5.0%2Bdas.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl ${SOURCES} \
+    && pip3 install --no-cache-dir http://10.16.4.1:8000/debug/lmslim/dtk25.04.1-rc3/moe_w8a8-0.0.1%2Bdas.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl ${SOURCES} \
+    && pip3 install --no-cache-dir http://10.16.4.1:8000/debug/lmslim/dtk25.04.1-rc3/moe_w8a8_prefill_gemm-0.0.1%2Bdas.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl ${SOURCES} \
+    && pip3 install --no-cache-dir http://10.16.4.1:8000/debug/amdsmi/amdsmi-24.5.3%2B02cbffb.dirty-py3-none-any.whl ${SOURCES} \
+    && pip3 install --no-cache-dir http://10.16.4.1:8000/debug/lightop/dtk25.04.1-rc3/lightop-0.5.0%2Bdas.dtk25041-cp310-cp310-manylinux_2_28_x86_64.whl ${SOURCES} \
+    && pip3 install --no-cache-dir http://10.16.4.1:8000/customized/lmslim/dtk25.04.1-release/lmslim-0.3.0%2Bdas.opt2.dtk2504-f2b8ae9b/lmslim-0.3.0%2Bdas.opt2.dtk25041-cp310-cp310-manylinux_2_28_x86_64.whl ${SOURCES} \
+    && pip3 install --no-cache-dir http://10.16.4.1:8000/customized/vllm/dtk25.04.1-release/vllm-0.8.5.post1%2Bdas.opt3.dtk25041-6e98aba5/vllm-0.8.5.post1%2Bdas.opt3.dtk25041-cp310-cp310-manylinux_2_28_x86_64.whl ${SOURCES} \
+    && pip3 install --no-cache-dir http://10.16.4.1:8000/debug/dgl/dtk25.04.1-rc3/dgl-2.2.1%2Bdas.opt1.dtk25041-cp310-cp310-manylinux_2_28_x86_64.whl ${SOURCES} \
+    # && pip3 install --no-cache-dir http://10.16.4.1:8000/dcuai-pre-release/fastpt/dtk25.04-rc5/fastpt-2.0.0%2Bdas.dtk2504-py3-none-any.whl ${SOURCES} \
+    # && pip3 install --no-cache-dir transformers==4.51.3 ${SOURCES} \
+    # && pip3 install --no-cache-dir numpy==1.24.3 ${SOURCES} \
+    && pip3 install --no-cache-dir hypothesis==5.35.1 ${SOURCES} \
+    && pip3 install --no-cache-dir matplotlib ${SOURCES} \
+    && pip3 install --no-cache-dir pandas ${SOURCES} \
+    && pip3 install --no-cache-dir sympy==1.12.1 ${SOURCES} \
+    && pip3 install --no-cache-dir numa ${SOURCES} \
+    && pip3 install --no-cache-dir torchdata==0.8.0 ${SOURCES} \
+    && pip3 install --no-cache-dir numpy==1.25 ${SOURCES} \
+    && pip3 install --no-cache-dir transformers==4.51.1 ${SOURCES} \
+    && pip3 install --no-cache-dir numa ${SOURCES} \
+    && pip3 install --no-cache-dir setuptools==80.8.0 ${SOURCES} \
+    && pip3 uninstall pynvml -y \
+    && rm -rf /tmprm \
+
+WORKDIR /workspace
+COPY CHANGELOG_VLLM085.md /workspace/
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["/bin/bash"]
+
+RUN echo "/usr/local/lib/python3.10/dist-packages/torchaudio.libs" >> /etc/ld.so.conf \
+    && ldconfig
+
+
+
