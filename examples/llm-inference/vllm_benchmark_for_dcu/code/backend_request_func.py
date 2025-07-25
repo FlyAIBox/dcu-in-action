@@ -1,4 +1,27 @@
 # SPDX-License-Identifier: Apache-2.0
+"""
+后端请求处理模块 - 支持多种大模型推理后端的统一请求接口
+
+这个模块为不同的大模型推理后端提供统一的异步请求接口，支持：
+- vLLM (OpenAI兼容API)
+- TGI (Text Generation Inference)
+- TensorRT-LLM
+- DeepSpeed-MII
+- OpenAI官方API
+- 其他OpenAI兼容的推理服务
+
+主要功能:
+1. 统一的请求/响应数据结构
+2. 异步HTTP请求处理
+3. 流式响应解析
+4. 性能指标收集 (TTFT, ITL等)
+5. 错误处理和重试机制
+
+针对DCU优化:
+- 支持海光DCU的HIP运行时环境
+- 优化了大模型推理的网络通信
+- 提供详细的性能监控数据
+"""
 
 import json
 import os
@@ -14,38 +37,48 @@ from tqdm.asyncio import tqdm
 from transformers import (AutoTokenizer, PreTrainedTokenizer,
                           PreTrainedTokenizerFast)
 
-# NOTE(simon): do not import vLLM here so the benchmark script
-# can run without vLLM installed.
+# 注意: 这里不导入vLLM，使得基准测试脚本可以在没有安装vLLM的环境中运行
+# 这样可以测试其他推理后端而不依赖vLLM
 
+# HTTP客户端超时配置: 6小时，适应大模型长时间推理场景
 AIOHTTP_TIMEOUT = aiohttp.ClientTimeout(total=6 * 60 * 60)
 
 
 @dataclass
 class RequestFuncInput:
-    prompt: str
-    api_url: str
-    prompt_len: int
-    output_len: int
-    model: str
-    model_name: Optional[str] = None
-    logprobs: Optional[int] = None
-    extra_body: Optional[dict] = None
-    multi_modal_content: Optional[dict] = None
-    ignore_eos: bool = False
+    """
+    请求输入数据结构 - 封装发送给推理后端的请求参数
+
+    这个数据类标准化了不同后端的请求格式，提供统一的接口。
+    """
+    prompt: str                                    # 输入提示文本
+    api_url: str                                   # 推理服务的API端点URL
+    prompt_len: int                                # 输入prompt的token数量
+    output_len: int                                # 期望输出的token数量
+    model: str                                     # 模型标识符或路径
+    model_name: Optional[str] = None               # 服务中的模型名称 (可选)
+    logprobs: Optional[int] = None                 # 返回的logprobs数量 (可选)
+    extra_body: Optional[dict] = None              # 额外的请求参数 (如采样参数)
+    multi_modal_content: Optional[dict] = None     # 多模态内容 (图像、音频等)
+    ignore_eos: bool = False                       # 是否忽略结束符，强制生成指定长度
 
 
 @dataclass
 class RequestFuncOutput:
-    generated_text: str = ""
-    success: bool = False
-    latency: float = 0.0
-    output_tokens: int = 0
-    ttft: float = 0.0  # Time to first token
-    itl: list[float] = field(
-        default_factory=list)  # list of inter-token latencies
-    tpot: float = 0.0  # avg next-token latencies
-    prompt_len: int = 0
-    error: str = ""
+    """
+    请求输出数据结构 - 封装推理后端返回的响应和性能指标
+
+    这个数据类统一了不同后端的响应格式，并收集了详细的性能数据。
+    """
+    generated_text: str = ""                       # 生成的文本内容
+    success: bool = False                          # 请求是否成功完成
+    latency: float = 0.0                          # 总延迟时间 (秒)
+    output_tokens: int = 0                         # 实际输出的token数量
+    ttft: float = 0.0                             # 首次token时间 (Time to First Token, 秒)
+    itl: list[float] = field(default_factory=list) # 迭代延迟列表 (Inter-Token Latency, 秒)
+    tpot: float = 0.0                             # 平均每token时间 (Time Per Output Token, 秒)
+    prompt_len: int = 0                           # 输入prompt长度 (用于验证)
+    error: str = ""                               # 错误信息 (如果请求失败)
 
 
 async def async_request_tgi(
@@ -246,6 +279,31 @@ async def async_request_openai_completions(
     request_func_input: RequestFuncInput,
     pbar: Optional[tqdm] = None,
 ) -> RequestFuncOutput:
+    """
+    OpenAI Completions API异步请求函数 - 支持vLLM等OpenAI兼容的推理服务
+
+    这是最重要的请求函数，用于与vLLM服务进行通信。支持流式响应和详细的性能指标收集。
+
+    参数:
+        request_func_input: RequestFuncInput - 请求输入参数
+        pbar: Optional[tqdm] - 进度条对象 (可选)
+
+    返回:
+        RequestFuncOutput - 包含生成文本和性能指标的响应对象
+
+    功能特性:
+        1. 流式响应处理: 实时接收生成的token
+        2. 性能指标收集: 精确测量TTFT和ITL
+        3. 错误处理: 完整的异常捕获和错误报告
+        4. 进度跟踪: 支持进度条更新
+
+    适用后端:
+        - vLLM (主要目标)
+        - LMDeploy
+        - SGLang
+        - ScaleLLM
+        - 其他OpenAI兼容服务
+    """
     api_url = request_func_input.api_url
     assert api_url.endswith(
         ("completions", "profile")

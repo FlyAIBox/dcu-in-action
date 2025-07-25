@@ -1,24 +1,34 @@
 # SPDX-License-Identifier: Apache-2.0
-r"""Benchmark online serving throughput.
+r"""
+海光DCU大模型推理性能基准测试工具
 
-On the server side, run one of the following commands:
-    vLLM OpenAI API server
+这是一个专门为海光DCU优化的vLLM大模型推理性能测试工具，用于评估大模型在DCU硬件上的推理性能。
+
+服务端启动命令示例:
+    vLLM OpenAI API 服务器
     vllm serve <your_model> \
         --swap-space 16 \
         --disable-log-requests
 
-On the client side, run:
+客户端测试命令示例:
     python benchmarks/benchmark_serving.py \
         --backend <backend> \
         --model <your_model> \
         --dataset-name sharegpt \
         --dataset-path <path to dataset> \
-        --request-rate <request_rate> \ # By default <request_rate> is inf
-        --num-prompts <num_prompts> # By default <num_prompts> is 1000
+        --request-rate <request_rate> \ # 默认为无限大，即立即发送所有请求
+        --num-prompts <num_prompts> # 默认为1000个请求
 
-    when using tgi backend, add
+    使用TGI后端时，需要添加:
         --endpoint /generate_stream
-    to the end of the command above.
+    到命令末尾。
+
+主要功能:
+1. 支持多种推理后端 (vLLM, TGI, OpenAI等)
+2. 支持多种数据集格式 (ShareGPT, Random, Sonnet等)
+3. 提供详细的性能指标分析 (TTFT, TPOT, ITL, 吞吐量等)
+4. 支持并发请求和请求速率控制
+5. 针对DCU硬件进行了优化配置
 """
 import argparse
 import asyncio
@@ -62,32 +72,46 @@ MILLISECONDS_TO_SECONDS_CONVERSION = 1000
 
 @dataclass
 class BenchmarkMetrics:
-    completed: int
-    total_input: int
-    total_output: int
-    request_throughput: float
-    request_goodput: float
-    output_throughput: float
-    total_token_throughput: float
-    mean_ttft_ms: float
-    median_ttft_ms: float
-    std_ttft_ms: float
-    percentiles_ttft_ms: list[tuple[float, float]]
-    mean_tpot_ms: float
-    median_tpot_ms: float
-    std_tpot_ms: float
-    percentiles_tpot_ms: list[tuple[float, float]]
-    mean_itl_ms: float
-    median_itl_ms: float
-    std_itl_ms: float
-    percentiles_itl_ms: list[tuple[float, float]]
-    # E2EL stands for end-to-end latency per request.
-    # It is the time taken on the client side from sending
-    # a request to receiving a complete response.
-    mean_e2el_ms: float
-    median_e2el_ms: float
-    std_e2el_ms: float
-    percentiles_e2el_ms: list[tuple[float, float]]
+    """
+    基准测试性能指标数据类
+
+    包含了大模型推理性能测试的所有关键指标，用于全面评估模型在DCU上的推理性能。
+    """
+    # 基础统计指标
+    completed: int                                    # 成功完成的请求数量
+    total_input: int                                  # 输入token总数
+    total_output: int                                 # 输出token总数
+
+    # 吞吐量指标 (单位: 请求/秒 或 token/秒)
+    request_throughput: float                         # 请求吞吐量: 每秒处理的请求数
+    request_goodput: float                           # 请求良好吞吐量: 满足SLO的请求数/秒
+    output_throughput: float                         # 输出吞吐量: 每秒生成的token数
+    total_token_throughput: float                    # 总token吞吐量: 每秒处理的总token数(输入+输出)
+
+    # TTFT (Time To First Token) 首次token时间指标 (单位: 毫秒)
+    mean_ttft_ms: float                              # TTFT平均值: 从请求到首个token的平均时间
+    median_ttft_ms: float                            # TTFT中位数: 50%请求的TTFT时间
+    std_ttft_ms: float                               # TTFT标准差: 衡量TTFT的波动性
+    percentiles_ttft_ms: list[tuple[float, float]]   # TTFT百分位数: [(百分位, 时间值)]
+
+    # TPOT (Time Per Output Token) 每token时间指标 (单位: 毫秒)
+    mean_tpot_ms: float                              # TPOT平均值: 生成每个token的平均时间
+    median_tpot_ms: float                            # TPOT中位数: 50%token的生成时间
+    std_tpot_ms: float                               # TPOT标准差: 衡量生成速度的稳定性
+    percentiles_tpot_ms: list[tuple[float, float]]   # TPOT百分位数: [(百分位, 时间值)]
+
+    # ITL (Inter-Token Latency) 迭代延迟指标 (单位: 毫秒)
+    mean_itl_ms: float                               # ITL平均值: token间的平均延迟
+    median_itl_ms: float                             # ITL中位数: 50%的token间延迟
+    std_itl_ms: float                                # ITL标准差: 衡量延迟的一致性
+    percentiles_itl_ms: list[tuple[float, float]]    # ITL百分位数: [(百分位, 延迟值)]
+
+    # E2EL (End-to-End Latency) 端到端延迟指标 (单位: 毫秒)
+    # 表示从客户端发送请求到接收完整响应的总时间
+    mean_e2el_ms: float                              # E2EL平均值: 端到端的平均延迟
+    median_e2el_ms: float                            # E2EL中位数: 50%请求的端到端延迟
+    std_e2el_ms: float                               # E2EL标准差: 衡量端到端延迟的稳定性
+    percentiles_e2el_ms: list[tuple[float, float]]   # E2EL百分位数: [(百分位, 延迟值)]
 
 
 async def get_request(
@@ -96,22 +120,32 @@ async def get_request(
     burstiness: float = 1.0,
 ) -> AsyncGenerator[SampleRequest, None]:
     """
-    Asynchronously generates requests at a specified rate
-    with OPTIONAL burstiness.
+    异步请求生成器 - 按指定速率和突发性模式生成测试请求
 
-    Args:
-        input_requests:
-            A list of input requests, each represented as a SampleRequest.
-        request_rate:
-            The rate at which requests are generated (requests/s).
-        burstiness (optional):
-            The burstiness factor of the request generation.
-            Only takes effect when request_rate is not inf.
-            Default value is 1, which follows a Poisson process.
-            Otherwise, the request intervals follow a gamma distribution.
-            A lower burstiness value (0 < burstiness < 1) results
-            in more bursty requests, while a higher burstiness value
-            (burstiness > 1) results in a more uniform arrival of requests.
+    这个函数是压测的核心组件，控制请求的发送时机和模式，模拟真实的用户请求场景。
+
+    参数说明:
+        input_requests: list[SampleRequest]
+            待发送的请求列表，每个请求包含prompt、长度等信息
+        request_rate: float
+            请求发送速率 (请求/秒)
+            - 如果为 inf，则立即发送所有请求 (批量模式)
+            - 如果为有限值，则按指定速率发送 (流量控制模式)
+        burstiness: float, 可选参数，默认1.0
+            请求突发性因子，控制请求到达的时间分布模式
+            - 仅在 request_rate 不为 inf 时生效
+            - 默认值1.0: 遵循泊松过程 (Poisson process)，请求间隔呈指数分布
+            - 其他值: 请求间隔遵循伽马分布 (Gamma distribution)
+            - 0 < burstiness < 1: 更突发的请求模式 (请求更集中)
+            - burstiness > 1: 更均匀的请求到达模式 (请求更分散)
+
+    返回:
+        AsyncGenerator[SampleRequest, None]: 异步生成器，按时序产生请求对象
+
+    应用场景:
+        - 批量测试: request_rate=inf, 测试系统最大处理能力
+        - 流量模拟: request_rate=有限值, 模拟真实用户访问模式
+        - 突发测试: 调整burstiness, 测试系统对流量波动的适应性
     """
     input_requests: Iterable[SampleRequest] = iter(input_requests)
 
@@ -143,6 +177,39 @@ def calculate_metrics(
     selected_percentiles: list[float],
     goodput_config_dict: dict[str, float],
 ) -> tuple[BenchmarkMetrics, list[int]]:
+    """
+    性能指标计算函数 - 分析测试结果并计算各项性能指标
+
+    这是基准测试的核心分析函数，将原始的请求-响应数据转换为标准化的性能指标。
+
+    参数说明:
+        input_requests: list[SampleRequest]
+            原始输入请求列表，包含每个请求的prompt长度等信息
+        outputs: list[RequestFuncOutput]
+            推理输出结果列表，包含生成文本、延迟、成功状态等
+        dur_s: float
+            基准测试总持续时间 (秒)，用于计算吞吐量指标
+        tokenizer: PreTrainedTokenizerBase
+            分词器，用于计算输出token数量 (当后端未提供时)
+        selected_percentile_metrics: list[str]
+            需要计算百分位数的指标名称列表 ["ttft", "tpot", "itl", "e2el"]
+        selected_percentiles: list[float]
+            要计算的百分位数列表，如 [50, 90, 95, 99]
+        goodput_config_dict: dict[str, float]
+            服务质量目标 (SLO) 配置，用于计算goodput指标
+            格式: {"ttft": 100, "tpot": 50} (单位: 毫秒)
+
+    返回:
+        tuple[BenchmarkMetrics, list[int]]:
+            - BenchmarkMetrics: 完整的性能指标对象
+            - list[int]: 每个请求的实际输出token数量列表
+
+    计算的指标包括:
+        1. 基础统计: 成功请求数、总输入/输出token数
+        2. 吞吐量: 请求吞吐量、输出吞吐量、总token吞吐量
+        3. 延迟分析: TTFT、TPOT、ITL、E2EL的均值、中位数、标准差、百分位数
+        4. 服务质量: 满足SLO要求的请求比例 (goodput)
+    """
     actual_output_lens: list[int] = []
     total_input = 0
     completed = 0

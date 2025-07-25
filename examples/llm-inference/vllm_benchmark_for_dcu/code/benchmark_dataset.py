@@ -1,17 +1,27 @@
 # SPDX-License-Identifier: Apache-2.0
 """
-This module defines a framework for sampling benchmark requests from various
-datasets. Each dataset subclass of BenchmarkDataset must implement sample
-generation. Supported dataset types include:
-  - ShareGPT
-  - Random (synthetic)
-  - Sonnet
-  - BurstGPT
-  - HuggingFace
-  - VisionArena
+基准测试数据集模块 - 为大模型推理性能测试提供多样化的数据集支持
 
-TODO: Implement CustomDataset to parse a JSON file and convert its contents into
-SampleRequest instances, similar to the approach used in ShareGPT.
+这个模块定义了一个完整的数据集框架，用于从各种数据源采样基准测试请求。
+每个BenchmarkDataset的子类都必须实现样本生成功能。
+
+支持的数据集类型:
+  - ShareGPT: 真实对话数据集，模拟用户与AI助手的交互
+  - Random (synthetic): 随机生成的合成数据，用于压力测试
+  - Sonnet: 莎士比亚十四行诗数据集，用于文学文本生成测试
+  - BurstGPT: 突发性请求模式数据集，测试系统负载能力
+  - HuggingFace: 支持HuggingFace Hub上的各种数据集
+  - VisionArena: 多模态视觉数据集，测试图文理解能力
+
+主要功能:
+1. 统一的数据集接口和采样机制
+2. 支持多模态数据 (文本、图像等)
+3. 灵活的数据预处理和格式化
+4. 可重现的随机采样 (通过随机种子控制)
+5. 针对DCU推理场景的优化
+
+TODO: 实现CustomDataset来解析JSON文件并转换为SampleRequest实例，
+类似于ShareGPT的处理方式。
 """
 
 import base64
@@ -47,23 +57,31 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SampleRequest:
     """
-    Represents a single inference request for benchmarking.
-    """
+    单个推理请求的数据结构 - 基准测试的基本单元
 
-    prompt: Union[str, Any]
-    prompt_len: int
-    expected_output_len: int
-    multi_modal_data: Optional[Union[MultiModalDataDict, dict]] = None
-    lora_request: Optional[LoRARequest] = None
+    这个数据类封装了一个完整的推理请求，包含输入提示、长度信息、
+    多模态数据和LoRA适配器等信息。是基准测试系统的核心数据结构。
+    """
+    prompt: Union[str, Any]                                    # 输入提示文本或多模态内容
+    prompt_len: int                                            # 输入提示的token长度
+    expected_output_len: int                                   # 期望输出的token长度
+    multi_modal_data: Optional[Union[MultiModalDataDict, dict]] = None  # 多模态数据 (图像、音频等)
+    lora_request: Optional[LoRARequest] = None                 # LoRA适配器请求 (用于微调模型)
 
 
 # -----------------------------------------------------------------------------
-# Benchmark Dataset Base Class
+# 基准测试数据集基类
 # -----------------------------------------------------------------------------
 
 
 class BenchmarkDataset(ABC):
-    DEFAULT_SEED = 0
+    """
+    基准测试数据集抽象基类 - 定义数据集的统一接口
+
+    所有具体的数据集实现都必须继承这个基类并实现sample方法。
+    提供了数据集的基础功能，包括随机种子管理、数据加载等。
+    """
+    DEFAULT_SEED = 0                                           # 默认随机种子
 
     def __init__(
         self,
@@ -71,12 +89,16 @@ class BenchmarkDataset(ABC):
         random_seed: int = DEFAULT_SEED,
     ) -> None:
         """
-        Initialize the BenchmarkDataset with an optional dataset path and random
-        seed.  Args:
-            dataset_path (Optional[str]): Path to the dataset. If None, it
-            indicates that a default or random dataset might be used.
-            random_seed (int): Seed value for reproducible shuffling or
-            sampling. Defaults to DEFAULT_SEED.
+        初始化基准测试数据集
+
+        参数:
+            dataset_path: Optional[str] - 数据集路径，如果为None则使用默认或随机数据集
+            random_seed: int - 随机种子，用于可重现的数据采样，默认为0
+
+        功能:
+            - 设置数据集路径和随机种子
+            - 初始化数据存储变量
+            - 为子类提供统一的初始化接口
         """
         self.dataset_path = dataset_path
         # Set the random seed, ensuring that a None value is replaced with the

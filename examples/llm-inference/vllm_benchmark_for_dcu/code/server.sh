@@ -1,16 +1,76 @@
+#!/bin/bash
+# =============================================================================
+# 海光DCU vLLM服务启动脚本
+# =============================================================================
+#
+# 功能说明:
+#   这个脚本用于在海光DCU环境下启动vLLM推理服务
+#   包含了针对DCU硬件的完整优化配置
+#
+# 适用场景:
+#   - 大模型推理服务部署
+#   - 多卡DCU张量并行推理
+#   - 高性能推理服务优化
+#
+# 注意事项:
+#   - 需要根据实际模型路径修改 /模型地址
+#   - 根据硬件配置调整张量并行度 (-tp 参数)
+#   - 根据显存大小调整内存利用率
+# =============================================================================
+
+# =============================================================================
+# DCU设备和通信优化配置
+# =============================================================================
+
+# DCU设备配置 - 指定使用的DCU设备 (这里使用CUDA_VISIBLE_DEVICES是为了兼容性)
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-export NCCL_MAX_NCHANNELS=16
-export NCCL_MIN_NCHANNELS=16
-export NCCL_P2P_LEVEL=SYS
-export VLLM_NUMA_BIND=0
-export VLLM_RANK0_NUMA=0
-export VLLM_RANK1_NUMA=0
-export VLLM_RANK2_NUMA=0
-export VLLM_RANK3_NUMA=0
-export VLLM_RANK4_NUMA=0
-export VLLM_RANK5_NUMA=0
-export VLLM_RANK6_NUMA=0
-export VLLM_RANK7_NUMA=0
 
+# NCCL通信优化 - 针对DCU多卡通信的优化设置
+export NCCL_MAX_NCHANNELS=16                    # NCCL最大通道数，提高多卡通信带宽
+export NCCL_MIN_NCHANNELS=16                    # NCCL最小通道数，确保通信稳定性
+export NCCL_P2P_LEVEL=SYS                       # 启用系统级P2P通信，提高DCU间数据传输效率
 
-vllm serve /模型地址  --trust-remote-code  --dtype float16 --max-model-len 32768 --max-seq-len-to-capture 32768 -tp 4 --gpu-memory-utilization 0.9  --disable-log-requests --port 8888
+# NUMA绑定优化 - 优化内存访问局部性
+export VLLM_NUMA_BIND=0                         # 启用NUMA绑定
+export VLLM_RANK0_NUMA=0                        # 将rank 0绑定到NUMA节点0
+export VLLM_RANK1_NUMA=0                        # 将rank 1绑定到NUMA节点0
+export VLLM_RANK2_NUMA=0                        # 将rank 2绑定到NUMA节点0
+export VLLM_RANK3_NUMA=0                        # 将rank 3绑定到NUMA节点0
+export VLLM_RANK4_NUMA=0                        # 将rank 4绑定到NUMA节点0
+export VLLM_RANK5_NUMA=0                        # 将rank 5绑定到NUMA节点0
+export VLLM_RANK6_NUMA=0                        # 将rank 6绑定到NUMA节点0
+export VLLM_RANK7_NUMA=0                        # 将rank 7绑定到NUMA节点0
+
+# =============================================================================
+# vLLM服务启动命令
+# =============================================================================
+
+vllm serve /模型地址 \                           # 模型路径 (需要替换为实际路径)
+    --trust-remote-code \                        # 信任远程代码，允许执行模型自定义代码
+    --dtype float16 \                            # 使用FP16精度，节省显存并提升速度
+    --max-model-len 32768 \                      # 最大模型长度，支持32K上下文
+    --max-seq-len-to-capture 32768 \             # 最大序列捕获长度
+    -tp 4 \                                      # 张量并行度，使用4卡DCU (可根据需要调整)
+    --gpu-memory-utilization 0.9 \               # GPU显存利用率90%
+    --disable-log-requests \                     # 禁用请求日志，减少I/O开销
+    --port 8888                                  # 服务端口号
+
+# =============================================================================
+# 使用说明
+# =============================================================================
+#
+# 1. 修改模型路径:
+#    将 "/模型地址" 替换为实际的模型路径，例如:
+#    "/data/model/cognitivecomputations/DeepSeek-R1-awq"
+#
+# 2. 调整张量并行度:
+#    根据可用的DCU数量调整 -tp 参数
+#    例如: -tp 8 (使用8卡DCU)
+#
+# 3. 调整显存利用率:
+#    根据模型大小和显存容量调整 --gpu-memory-utilization
+#    建议范围: 0.8-0.95
+#
+# 4. 端口配置:
+#    确保端口8888未被占用，或修改为其他可用端口
+# =============================================================================
