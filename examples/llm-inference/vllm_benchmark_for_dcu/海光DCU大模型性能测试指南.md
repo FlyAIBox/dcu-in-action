@@ -1,4 +1,4 @@
-# 大模型性能测试指南
+# 海光DCU大模型性能测试指南
 
 本指南旨在为大模型技术初学者提供一份详细的性能测试操作步骤，确保每一步都清晰明了，易于理解和执行。
 
@@ -20,7 +20,7 @@
 
   ```Bash
   docker run -it \
-  --name=llm-benchmark \
+  --name=llm-benchmrk \
   -v /data:/data \
   -v /opt/hyhal:/opt/hyhal:ro \
   -v /usr/local/hyhal:/usr/local/hyhal:ro \
@@ -33,7 +33,7 @@
   --security-opt seccomp=unconfined \
   --group-add video \
   --privileged \
-  image.sourcefind.cn:5000/dcu/admin/base/custom:kylinv10-dtk25.04-py310 \
+  image.sourcefind.cn:5000/dcu/admin/base/vllm:0.8.5-ubuntu22.04-dtk25.04.1-rc5-das1.6-py3.10-20250711 \
   /bin/bash
   ```
 
@@ -51,7 +51,7 @@
   - `--security-opt seccomp=unconfined`: 关闭 Seccomp 安全限制，可能在某些情况下需要，但会降低安全性 。
   - `--group-add video`: 将容器内的用户添加到 `video` 组，以便访问 GPU 设备 。
   - `--privileged`: 授予容器扩展的权限，使其可以访问宿主机的所有设备。慎用此选项，因为它会降低安全性 。
-  - `image.sourcefind.cn:5000/dcu/admin/base/custom:kylinv10-dtk25.04-py310`: 指定用于创建容器的 Docker 镜像 。
+  - `image.sourcefind.cn:5000/dcu/admin/base/vllm:0.8.5-ubuntu22.04-dtk25.04.1-rc5-das1.6-py3.10-20250711`: 指定用于创建容器的 Docker 镜像 。
   - `/bin/bash`: 在容器启动后执行的命令，这里是启动一个 bash shell 。
 
 ------
@@ -60,6 +60,13 @@
 
 在容器内部，需要启动 vLLM 服务来加载并运行大模型 。这里以 `ds-671b-awq` 模型为例 。
 
+- 下载模型
+
+  ```bash
+  pip install modelscope
+  modelscope download --model cognitivecomputations/DeepSeek-R1-awq  --local_dir /data
+  ```
+  
 - 配置环境变量并启动 vLLM 服务：
 
   以下脚本设置了一系列环境变量，然后启动了 vLLM 服务 。这些环境变量对于优化 vLLM 在多 GPU 环境下的性能至关重要 。
@@ -84,9 +91,32 @@
   export LMSLIM_USE_LIGHTOP=0
   export W4A16_MOE_CUDA=1
   vllm serve /data/model/cognitivecomputations/DeepSeek-R1-awq --trust-remote-code  --dtype float16 -q moe_wna16 --gpu-memory-utilization 0.90 --tensor-parallel-size 8 --max-model-len 32768 --block-size 64 --max-num-seqs 128  --speculative_config '{""num_speculative_tokens"": 3}'
+  
+  
+  # 模型优化前的明立
+  export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+  export ALLREDUCE_STREAM_WITH_COMPUTE=1
+  export NCCL_MIN_NCHANNELS=16
+  export NCCL_MAX_NCHANNELS=16
+  export VLLM_NUMA_BIND=1
+  export VLLM_RANK0_NUMA=0
+  export VLLM_RANK1_NUMA=0
+  export VLLM_RANK2_NUMA=0
+  export VLLM_RANK3_NUMA=0
+  export VLLM_RANK4_NUMA=0
+  export VLLM_RANK5_NUMA=0
+  export VLLM_RANK6_NUMA=0
+  export VLLM_RANK7_NUMA=0
+  export VLLM_WORKER_MULTIPROC_METHOD=spawn
+  export VLLM_PCIE_USE_CUSTOM_ALLREDUCE=1
+  export VLLM_FUSED_MOE_CHUNK_SIZE=16384
+  export LMSLIM_USE_LIGHTOP=0
+  export W4A16_MOE_CUDA=1
+  vllm serve /data/model/cognitivecomputations/DeepSeek-R1-awq --trust-remote-code --dtype float16 --max-model-len 32768 -tp 8 -q moe_wna16 --gpu-memory-utilization 0.90 --block-size 64 
+  
+  vllm serve /data/model/cognitivecomputations/DeepSeek-R1-awq --trust-remote-code --dtype float16 --max-model-len 32768 -tp 8 -q moe_wna16 --gpu-memory-utilization 0.90 --block-size 64 --port 8010
   ```
 
-  
 
 这个vLLM服务启动脚本包含了完整的DCU环境优化配置，以下是详细的参数解释：
 
@@ -137,6 +167,38 @@
   文档中还提到了 `ds-671b-int8` 模型 ，以及参考文档《Deepseek671b/qwen3 VLLM使用部署方法说明（对外版本）》 41，这些可以作为扩展阅读，了解不同量化类型模型的部署方法。
 
 ------
+
+
+
+```bash
+curl -k -X POST "http://127.0.0.1:8010/v1/chat/completions" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "Qwen2.5-VL-72B-Instruct",
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {"type": "text", "text": "分析图中场景并生成详细描述"},
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "http://8.154.30.196:5001/uploads/202506271354/1751003672427-80c84e67-d399-4c92-ae11-67fa9cc7b970.JPG",
+              "detail": "high"
+            }
+          }
+        ]
+      }
+    ],
+    "max_tokens": 1024
+  }'
+
+这个也是，去掉前面的api前缀
+```
+
+
+
+
 
 ### **3. 性能测试**
 
@@ -231,7 +293,21 @@ vLLM 服务启动后，就可以进行性能测试了 。
 | **99百分位首次 token 时间** | `P99_TTFT` / `P99 TTFT`                 | 99% 的请求的首次 token 时间都小于或等于这个值。              | 确保绝大多数用户都能获得快速的首次响应，即使在高负载或有少量异常情况时。 |
 | **99百分位每 token 时间**   | `P99_TPOT` / `P99 TPOT`                 | 99% 的生成 token 的每 token 时间都小于或等于这个值。         | 衡量模型在绝大多数情况下持续生成 token 的稳定性，有助于发现生成过程中的偶尔卡顿或延迟。 |
 
-## 大模型推理压测结果数据点解读
+------
+
+其中 P99 ITL、P99 TTFT 和 P99 TPOT 这三个指标：
+
+| 指标         | 全称                      | 核心含义                             | 衡量什么？                                 | 对用户体验的影响                         | 关注点                                   |
+| ------------ | ------------------------- | ------------------------------------ | ------------------------------------------ | ---------------------------------------- | ---------------------------------------- |
+| **P99 ITL**  | P99 Inter-Token Latency   | 第 99 百分位数的**令牌间延迟**       | 模型生成**连续两个输出令牌之间**的时间间隔 | 影响输出的**流畅性和连贯性**，避免卡顿。 | **流式传输**性能，避免单次卡顿。         |
+| **P99 TTFT** | P99 Time to First Token   | 第 99 百分位数的**首令牌生成时间**   | 从请求到生成**第一个输出令牌**所需的时间   | 影响用户的**第一印象和响应速度感知**。   | **首次响应速度**，即“模型多快能开始说？” |
+| **P99 TPOT** | P99 Time per Output Token | 第 99 百分位数的**每个输出令牌时间** | 生成**每个输出令牌的平均时间**             | 影响**完成整个输出的等待时间**。         | **持续生成效率**，即“模型说得有多快？”   |
+
+------
+
+希望这个表格能让您更清晰地理解这些指标！
+
+## 大模型推理压测结果数据解读
 
 | 字段名              | 代码中的实际变量名  | 英文全称              | 解释                                                         | 实际意义                                                     |
 | ------------------- | ------------------- | --------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -245,3 +321,7 @@ vLLM 服务启动后，就可以进行性能测试了 。
 | **首次 token 时间** | `TTFT`              | Time To First Token   | 从发送请求到接收到第一个 token 所需的**平均时间**（毫秒）。  | **对用户体验影响很大**，因为它决定了用户感知到的模型响应速度。在交互式应用中，TTFT 越低，用户会感觉响应越“实时”。 |
 | **每 token 时间**   | `TPOT`              | Time Per Output Token | 生成后续每个 token 所需的**平均时间**（毫秒），也称**解码步长**或**迭代时间**。 | **决定整个响应生成的速度**。TPOT 越低，生成整个长文本所需的时间就越少。它主要反映了模型在连续生成阶段的效率。 |
 | **迭代延迟**        | `ITL`               | Iteration Latency     | 模型生成每个 token（或每个解码步骤）的**内部处理延迟**（毫秒），不包括网络传输等外部开销。 | 反映模型**内部计算的效率**。更低的 ITL 意味着模型在 GPU 上的计算过程更有效率，有助于提高整体生成速度。 |
+
+**测试效果如下**
+
+![测试效果](https://cdn.jsdelivr.net/gh/Fly0905/note-picture@main/imag/202507251545542.png)

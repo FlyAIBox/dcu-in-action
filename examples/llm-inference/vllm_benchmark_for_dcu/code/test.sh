@@ -14,23 +14,24 @@
 #
 # 输出结果:
 #   - 详细日志文件: ./log/目录下
-#   - 汇总CSV文件: r1-awq-0705.csv
+#   - 汇总CSV文件: deepseek-r1-awq-0725.csv
 #   - 包含吞吐量、延迟等关键性能指标
 # =============================================================================
 
 # DCU设备配置 - 指定使用所有8个DCU设备
 export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
-# 创建CSV结果文件并写入表头
-# 包含所有关键性能指标的列名
-echo "tp,data_type,batch,prompt_tokens,completion_tokens,TOTAL_THROUGHPUT(toks/s),generate_throughput(toks/s), TTFT(ms),TPOT(ms),ITL(ms)" > r1-awq-0705.csv
-
 # 测试参数配置
-pairs=( "512 512" "1024 1024" )                                    # 输入输出长度组合 (prompt_tokens completion_tokens)
-model_path="/data/model/cognitivecomputations/DeepSeek-R1-awq/"    # 模型路径 - DeepSeek-R1 AWQ量化版本
+result_file="deepseek-r1-awq-0725.csv"                             # 结果文件名
+pairs=("512 512" "1024 1024")                                      # 输入输出长度组合 (prompt_tokens completion_tokens)
+model_path="/data/model/cognitivecomputations/DeepSeek-R1-awq"     # 模型路径 - DeepSeek-R1 AWQ量化版本
 tp=8                                                                # 张量并行度 - 使用8卡DCU
 data_type="float16"                                                 # 数据类型 - FP16精度
-port=8010
+port=8010                                                           # vLLM服务端口
+
+# 创建CSV结果文件并写入表头
+# 包含所有关键性能指标的列名
+echo "tp,data_type,batch,prompt_tokens,completion_tokens,TOTAL_THROUGHPUT(toks/s),generate_throughput(toks/s), TTFT(ms),TPOT(ms),ITL(ms)" > ${result_file}
 # 创建日志目录
 mkdir -p ./log/
 # =============================================================================
@@ -53,16 +54,16 @@ for batch in 1 2 4 6 8 10 16 20 24 32 64; do                      # 批次大小
         # 执行基准测试 - 调用benchmark_serving.py进行性能测试
         # =================================================================
         python benchmark_serving.py \
-                --backend openai \                                  # 使用OpenAI兼容API (vLLM)
-                --port ${port} \                                    # vLLM服务端口
-                --model ${model_path} \                             # 模型路径
-                --trust-remote-code \                               # 信任远程代码 (某些模型需要)
-                --dataset-name random \                             # 使用随机生成的测试数据
-                --ignore-eos \                                      # 忽略结束符，强制生成指定长度
-                --random-input-len ${prompt_tokens} \               # 随机输入长度
-                --random-output-len ${completion_tokens} \          # 随机输出长度
-                --num-prompts ${batch}  \                           # 请求数量 (等于批次大小)
-                2>&1 | tee  $log_path                               # 输出重定向到日志文件
+                --backend openai \
+                --port ${port} \
+                --model ${model_path} \
+                --trust-remote-code \
+                --dataset-name random \
+                --ignore-eos \
+                --random-input-len ${prompt_tokens} \
+                --random-output-len ${completion_tokens} \
+                --num-prompts ${batch} \
+                2>&1 | tee  $log_path
         # =================================================================
         # 性能指标提取 - 从日志文件中解析关键性能数据
         # =================================================================
@@ -84,7 +85,7 @@ for batch in 1 2 4 6 8 10 16 20 24 32 64; do                      # 批次大小
         P99_TPOT=`grep "^P99 TPOT"  $log_path| awk -F ' ' '{print $4}'`                  # P99每token时间 (ms)
 
         # 将结果写入CSV文件 - 格式化输出所有关键指标
-        echo "$tp,$data_type,$batch,$prompt_tokens,$completion_tokens,$TOTAL_THROUGHPUT,$GEN_THROUGHPUT,$TTFT,$TPOT, $ITL" >> r1-awq-0705.csv
+        echo "$tp,$data_type,$batch,$prompt_tokens,$completion_tokens,$TOTAL_THROUGHPUT,$GEN_THROUGHPUT,$TTFT,$TPOT, $ITL" >> ${result_file}
     done
 done
 
@@ -92,5 +93,5 @@ done
 # 测试完成提示
 # =============================================================================
 echo "基准测试完成！"
-echo "结果文件: r1-awq-0705.csv"
+echo "结果文件: ${result_file}"
 echo "详细日志: ./log/ 目录"
