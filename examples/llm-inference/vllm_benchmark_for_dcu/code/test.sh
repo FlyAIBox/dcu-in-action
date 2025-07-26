@@ -53,6 +53,19 @@ for batch in 1 2 4 6 8 10 16 20 24 32 64; do                      # 批次大小
         # =================================================================
         # 执行基准测试 - 调用benchmark_serving.py进行性能测试
         # =================================================================
+        #
+        # 参数说明:
+        # --backend openai        : 使用OpenAI兼容的API接口 (vLLM支持)
+        # --port ${port}          : 连接到指定端口的vLLM服务
+        # --model ${model_path}   : 指定测试的模型路径
+        # --trust-remote-code     : 信任模型中的自定义代码 (某些模型需要)
+        # --dataset-name random   : 使用随机生成的测试数据
+        # --ignore-eos           : 忽略结束符，强制生成指定长度的文本
+        # --random-input-len     : 随机输入的token长度
+        # --random-output-len    : 期望输出的token长度
+        # --num-prompts          : 本轮测试的请求数量 (等于batch大小)
+        # 2>&1 | tee $log_path   : 将输出同时显示在终端和保存到日志文件
+        #
         python benchmark_serving.py \
                 --backend openai \
                 --port ${port} \

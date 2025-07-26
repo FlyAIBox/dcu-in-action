@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-r"""
+"""
 海光DCU大模型推理性能基准测试工具
 
 这是一个专门为海光DCU优化的vLLM大模型推理性能测试工具，用于评估大模型在DCU硬件上的推理性能。
@@ -310,26 +310,51 @@ def calculate_metrics(
 
 
 async def benchmark(
-    backend: str,
-    api_url: str,
-    base_url: str,
-    model_id: str,
-    model_name: str,
-    tokenizer: PreTrainedTokenizerBase,
-    input_requests: list[SampleRequest],
-    logprobs: Optional[int],
-    request_rate: float,
-    burstiness: float,
-    disable_tqdm: bool,
-    profile: bool,
-    selected_percentile_metrics: list[str],
-    selected_percentiles: list[float],
-    ignore_eos: bool,
-    goodput_config_dict: dict[str, float],
-    max_concurrency: Optional[int],
-    lora_modules: Optional[Iterable[str]],
-    extra_body: Optional[dict],
+    backend: str,                                    # 推理后端类型 (vllm, openai, tgi等)
+    api_url: str,                                    # API服务地址
+    base_url: str,                                   # 基础URL地址
+    model_id: str,                                   # 模型标识符
+    model_name: str,                                 # 模型名称
+    tokenizer: PreTrainedTokenizerBase,              # 分词器实例
+    input_requests: list[SampleRequest],             # 输入请求列表
+    logprobs: Optional[int],                         # 日志概率数量
+    request_rate: float,                             # 请求发送速率 (req/s)
+    burstiness: float,                               # 请求突发性因子
+    disable_tqdm: bool,                              # 是否禁用进度条
+    profile: bool,                                   # 是否启用性能分析
+    selected_percentile_metrics: list[str],          # 选择的百分位数指标
+    selected_percentiles: list[float],               # 百分位数值列表
+    ignore_eos: bool,                                # 是否忽略结束符
+    goodput_config_dict: dict[str, float],           # 服务质量目标配置
+    max_concurrency: Optional[int],                  # 最大并发数限制
+    lora_modules: Optional[Iterable[str]],           # LoRA模块列表
+    extra_body: Optional[dict],                      # 额外请求参数
 ):
+    """
+    异步基准测试主函数 - 执行完整的大模型推理性能测试
+
+    这是整个基准测试系统的核心函数，负责协调所有测试组件，执行完整的性能评估流程。
+
+    主要功能:
+    1. 初始化测试环境和验证服务可用性
+    2. 按指定模式生成和发送测试请求
+    3. 收集和分析性能数据
+    4. 计算各项性能指标
+    5. 输出详细的测试结果
+
+    测试流程:
+    1. 服务连通性验证 - 发送单个测试请求确保服务正常
+    2. 请求生成和调度 - 按指定速率和并发度发送请求
+    3. 响应收集和解析 - 异步收集所有响应数据
+    4. 性能指标计算 - 分析延迟、吞吐量等关键指标
+    5. 结果格式化输出 - 生成详细的性能报告
+
+    适用场景:
+    - 大模型推理服务性能评估
+    - 不同配置下的性能对比测试
+    - 系统负载能力和稳定性测试
+    - DCU硬件性能优化验证
+    """
     if backend in ASYNC_REQUEST_FUNCS:
         request_func = ASYNC_REQUEST_FUNCS[backend]
     else:
@@ -610,7 +635,35 @@ def save_to_pytorch_benchmark_format(args: argparse.Namespace,
 
 
 def main(args: argparse.Namespace):
-    print(args)
+    """
+    主函数 - 基准测试的入口点和流程控制中心
+
+    这个函数是整个基准测试系统的核心控制器，负责：
+    1. 解析和验证命令行参数
+    2. 初始化测试环境和组件
+    3. 协调数据集加载和请求生成
+    4. 执行异步基准测试流程
+    5. 处理结果输出和保存
+
+    参数:
+        args: argparse.Namespace - 包含所有命令行参数的命名空间对象
+
+    主要流程:
+    1. 环境初始化: 设置随机种子、配置tokenizer
+    2. 数据集处理: 根据指定类型加载和采样数据
+    3. 参数验证: 检查采样参数和服务质量配置
+    4. 测试执行: 运行异步基准测试
+    5. 结果处理: 保存和格式化输出结果
+
+    适用场景:
+    - 命令行直接调用进行单次测试
+    - 脚本自动化批量测试
+    - CI/CD流水线中的性能验证
+    """
+    print(args)  # 打印所有参数，便于调试和记录
+
+    # 设置随机种子，确保测试结果的可重现性
+    # 这对于对比不同配置的性能差异非常重要
     random.seed(args.seed)
     np.random.seed(args.seed)
 
