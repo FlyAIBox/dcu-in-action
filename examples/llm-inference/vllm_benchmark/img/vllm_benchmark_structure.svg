@@ -1,0 +1,424 @@
+<svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <rect width="1200" height="800" fill="#f8f9fa"/>
+  
+  <!-- 标题 -->
+  <text x="600" y="30" font-family="Times New Roman, serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#2c3e50">
+    大模型推理性能测试架构图
+  </text>
+  
+  <!-- 主要组件框架 -->
+  <!-- 测试框架层 -->
+  <g id="test-framework">
+    <rect x="50" y="80" width="280" height="150" fill="#e8f4f8" stroke="#3498db" stroke-width="2" rx="10"/>
+    <text x="190" y="105" font-family="SimSun, serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#2c3e50">
+      测试框架层
+    </text>
+    
+    <!-- vLLM Benchmark -->
+    <rect x="70" y="120" width="120" height="40" fill="#3498db" stroke="#2980b9" stroke-width="1" rx="5"/>
+    <text x="130" y="135" font-family="Times New Roman, serif" font-size="12" text-anchor="middle" fill="white">
+      vLLM Benchmark
+    </text>
+    <text x="130" y="150" font-family="Times New Roman, serif" font-size="12" text-anchor="middle" fill="white">
+      Serving
+    </text>
+    
+    <!-- 配置管理 -->
+    <rect x="200" y="120" width="120" height="40" fill="#27ae60" stroke="#229954" stroke-width="1" rx="5"/>
+    <text x="260" y="135" font-family="SimSun, serif" font-size="12" text-anchor="middle" fill="white">
+      配置管理
+    </text>
+    <text x="260" y="150" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="white">
+      combos.yaml
+    </text>
+    
+    <!-- 智能并发测试 -->
+    <rect x="70" y="175" width="120" height="40" fill="#e74c3c" stroke="#c0392b" stroke-width="1" rx="5"/>
+    <text x="130" y="190" font-family="SimSun, serif" font-size="12" text-anchor="middle" fill="white">
+      智能并发测试
+    </text>
+    <text x="130" y="205" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="white">
+      Auto Detection
+    </text>
+    
+    <!-- 多维度分析 -->
+    <rect x="200" y="175" width="120" height="40" fill="#9b59b6" stroke="#8e44ad" stroke-width="1" rx="5"/>
+    <text x="260" y="190" font-family="SimSun, serif" font-size="12" text-anchor="middle" fill="white">
+      多维度分析
+    </text>
+    <text x="260" y="205" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="white">
+      Multi-dimensional
+    </text>
+  </g>
+  
+  <!-- 核心指标层 -->
+  <g id="core-metrics">
+    <rect x="400" y="80" width="350" height="150" fill="#f8f9fa" stroke="#34495e" stroke-width="2" rx="10"/>
+    <text x="575" y="105" font-family="SimSun, serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#2c3e50">
+      核心性能指标
+    </text>
+    
+    <!-- TTFT -->
+    <rect x="420" y="120" width="90" height="50" fill="#f39c12" stroke="#e67e22" stroke-width="1" rx="5"/>
+    <text x="465" y="135" font-family="Times New Roman, serif" font-size="12" text-anchor="middle" fill="white">
+      TTFT
+    </text>
+    <text x="465" y="150" font-family="SimSun, serif" font-size="10" text-anchor="middle" fill="white">
+      首个令牌时间
+    </text>
+    <text x="465" y="165" font-family="Times New Roman, serif" font-size="8" text-anchor="middle" fill="white">
+      (ms)
+    </text>
+    
+    <!-- TPOT -->
+    <rect x="520" y="120" width="90" height="50" fill="#16a085" stroke="#138d75" stroke-width="1" rx="5"/>
+    <text x="565" y="135" font-family="Times New Roman, serif" font-size="12" text-anchor="middle" fill="white">
+      TPOT
+    </text>
+    <text x="565" y="150" font-family="SimSun, serif" font-size="10" text-anchor="middle" fill="white">
+      每令牌时间
+    </text>
+    <text x="565" y="165" font-family="Times New Roman, serif" font-size="8" text-anchor="middle" fill="white">
+      (ms/token)
+    </text>
+    
+    <!-- 吞吐量 -->
+    <rect x="620" y="120" width="90" height="50" fill="#c0392b" stroke="#a93226" stroke-width="1" rx="5"/>
+    <text x="665" y="135" font-family="SimSun, serif" font-size="12" text-anchor="middle" fill="white">
+      吞吐量
+    </text>
+    <text x="665" y="150" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="white">
+      Throughput
+    </text>
+    <text x="665" y="165" font-family="Times New Roman, serif" font-size="8" text-anchor="middle" fill="white">
+      (tokens/s)
+    </text>
+    
+    <!-- 并发效率 -->
+    <rect x="470" y="180" width="140" height="40" fill="#8e44ad" stroke="#7d3c98" stroke-width="1" rx="5"/>
+    <text x="540" y="195" font-family="SimSun, serif" font-size="12" text-anchor="middle" fill="white">
+      并发效率
+    </text>
+    <text x="540" y="210" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="white">
+      Concurrency Efficiency
+    </text>
+  </g>
+  
+  <!-- 公式展示区 -->
+  <g id="formulas">
+    <rect x="820" y="80" width="330" height="150" fill="#ecf0f1" stroke="#7f8c8d" stroke-width="2" rx="10"/>
+    <text x="985" y="105" font-family="SimSun, serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#2c3e50">
+      关键计算公式
+    </text>
+    
+    <!-- 公式1 -->
+    <text x="840" y="135" font-family="Times New Roman, serif" font-size="13" fill="#2c3e50">
+      TTFT = T_load + T_prefill + T_schedule
+    </text>
+    <text x="840" y="150" font-family="SimSun, serif" font-size="11" fill="#7f8c8d">
+      首个令牌时间 = 模型加载时间 + 预填充时间 + 调度延迟
+    </text>
+    
+    <!-- 公式2 -->
+    <text x="840" y="175" font-family="Times New Roman, serif" font-size="13" fill="#2c3e50">
+      Efficiency = Total_throughput / Concurrency
+    </text>
+    <text x="840" y="190" font-family="SimSun, serif" font-size="11" fill="#7f8c8d">
+      并发效率 = 总吞吐量 / 并发数
+    </text>
+    
+    <!-- 公式3 -->
+    <text x="840" y="215" font-family="Times New Roman, serif" font-size="13" fill="#2c3e50">
+      QPS = Requests_success / Duration_total
+    </text>
+    <text x="840" y="230" font-family="SimSun, serif" font-size="11" fill="#7f8c8d">
+      请求吞吐量 = 成功请求数 / 总测试时间
+    </text>
+  </g>
+  
+  <!-- 测试流程 -->
+  <g id="test-process">
+    <rect x="50" y="280" width="500" height="200" fill="#f4f6f7" stroke="#2c3e50" stroke-width="2" rx="10"/>
+    <text x="300" y="305" font-family="SimSun, serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#2c3e50">
+      两阶段测试流程
+    </text>
+    
+    <!-- 第一阶段 -->
+    <rect x="80" y="320" width="200" height="80" fill="#3498db" stroke="#2980b9" stroke-width="1" rx="5"/>
+    <text x="180" y="340" font-family="SimSun, serif" font-size="14" font-weight="bold" text-anchor="middle" fill="white">
+      第一阶段
+    </text>
+    <text x="180" y="360" font-family="SimSun, serif" font-size="12" text-anchor="middle" fill="white">
+      并发能力探测
+    </text>
+    <text x="180" y="375" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="white">
+      Concurrency: 1-64
+    </text>
+    <text x="180" y="390" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="white">
+      Auto Detection
+    </text>
+    
+    <!-- 第二阶段 -->
+    <rect x="320" y="320" width="200" height="80" fill="#27ae60" stroke="#229954" stroke-width="1" rx="5"/>
+    <text x="420" y="340" font-family="SimSun, serif" font-size="14" font-weight="bold" text-anchor="middle" fill="white">
+      第二阶段
+    </text>
+    <text x="420" y="360" font-family="SimSun, serif" font-size="12" text-anchor="middle" fill="white">
+      标准基准测试
+    </text>
+    <text x="420" y="375" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="white">
+      Config-driven
+    </text>
+    <text x="420" y="390" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="white">
+      Detailed Analysis
+    </text>
+    
+    <!-- 结果分析 -->
+    <rect x="130" y="420" width="240" height="45" fill="#e74c3c" stroke="#c0392b" stroke-width="1" rx="5"/>
+    <text x="250" y="440" font-family="SimSun, serif" font-size="14" font-weight="bold" text-anchor="middle" fill="white">
+      结果分析与可视化
+    </text>
+    <text x="250" y="455" font-family="Times New Roman, serif" font-size="11" text-anchor="middle" fill="white">
+      Performance Insights / Visualization
+    </text>
+  </g>
+  
+  <!-- 优化策略 -->
+  <g id="optimization">
+    <rect x="600" y="280" width="550" height="200" fill="#f8f9fa" stroke="#34495e" stroke-width="2" rx="10"/>
+    <text x="875" y="305" font-family="SimSun, serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#2c3e50">
+      性能优化策略
+    </text>
+    
+    <!-- 短期优化 -->
+    <rect x="620" y="320" width="160" height="70" fill="#f39c12" stroke="#e67e22" stroke-width="1" rx="5"/>
+    <text x="700" y="340" font-family="SimSun, serif" font-size="13" font-weight="bold" text-anchor="middle" fill="white">
+      短期优化
+    </text>
+    <text x="700" y="355" font-family="SimSun, serif" font-size="11" text-anchor="middle" fill="white">
+      配置调整
+    </text>
+    <text x="700" y="370" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="white">
+      • max_num_seqs
+    </text>
+    <text x="700" y="385" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="white">
+      • KV Cache策略
+    </text>
+    
+    <!-- 中期优化 -->
+    <rect x="790" y="320" width="160" height="70" fill="#16a085" stroke="#138d75" stroke-width="1" rx="5"/>
+    <text x="870" y="340" font-family="SimSun, serif" font-size="13" font-weight="bold" text-anchor="middle" fill="white">
+      中期优化
+    </text>
+    <text x="870" y="355" font-family="SimSun, serif" font-size="11" text-anchor="middle" fill="white">
+      架构调整
+    </text>
+    <text x="870" y="370" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="white">
+      • Load Balancing
+    </text>
+    <text x="870" y="385" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="white">
+      • Request Scheduling
+    </text>
+    
+    <!-- 长期优化 -->
+    <rect x="960" y="320" width="160" height="70" fill="#8e44ad" stroke="#7d3c98" stroke-width="1" rx="5"/>
+    <text x="1040" y="340" font-family="SimSun, serif" font-size="13" font-weight="bold" text-anchor="middle" fill="white">
+      长期优化
+    </text>
+    <text x="1040" y="355" font-family="SimSun, serif" font-size="11" text-anchor="middle" fill="white">
+      硬件升级
+    </text>
+    <text x="1040" y="370" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="white">
+      • GPU Selection
+    </text>
+    <text x="1040" y="385" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="white">
+      • Storage Optimization
+    </text>
+    
+    <!-- 性能监控 -->
+    <rect x="705" y="410" width="190" height="50" fill="#c0392b" stroke="#a93226" stroke-width="1" rx="5"/>
+    <text x="800" y="430" font-family="SimSun, serif" font-size="13" font-weight="bold" text-anchor="middle" fill="white">
+      持续性能监控
+    </text>
+    <text x="800" y="445" font-family="Times New Roman, serif" font-size="11" text-anchor="middle" fill="white">
+      GPU Utilization • Memory Usage • Error Rate
+    </text>
+    <text x="800" y="455" font-family="Times New Roman, serif" font-size="11" text-anchor="middle" fill="white">
+      Continuous Performance Monitoring
+    </text>
+  </g>
+  
+  <!-- 底层系统架构 -->
+  <g id="system-architecture">
+    <rect x="50" y="520" width="1100" height="220" fill="#f4f6f7" stroke="#2c3e50" stroke-width="2" rx="10"/>
+    <text x="600" y="545" font-family="SimSun, serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#2c3e50">
+      vLLM推理系统架构
+    </text>
+    
+    <!-- 请求处理流程 -->
+    <rect x="80" y="560" width="140" height="50" fill="#3498db" stroke="#2980b9" stroke-width="1" rx="5"/>
+    <text x="150" y="580" font-family="SimSun, serif" font-size="12" text-anchor="middle" fill="white">
+      请求接入
+    </text>
+    <text x="150" y="595" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="white">
+      Request Gateway
+    </text>
+    
+    <!-- 调度器 -->
+    <rect x="240" y="560" width="140" height="50" fill="#27ae60" stroke="#229954" stroke-width="1" rx="5"/>
+    <text x="310" y="580" font-family="SimSun, serif" font-size="12" text-anchor="middle" fill="white">
+      请求调度器
+    </text>
+    <text x="310" y="595" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="white">
+      Scheduler
+    </text>
+    
+    <!-- 模型引擎 -->
+    <rect x="400" y="560" width="140" height="50" fill="#e74c3c" stroke="#c0392b" stroke-width="1" rx="5"/>
+    <text x="470" y="580" font-family="SimSun, serif" font-size="12" text-anchor="middle" fill="white">
+      模型推理引擎
+    </text>
+    <text x="470" y="595" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="white">
+      Model Engine
+    </text>
+    
+    <!-- 内存管理 -->
+    <rect x="560" y="560" width="140" height="50" fill="#f39c12" stroke="#e67e22" stroke-width="1" rx="5"/>
+    <text x="630" y="580" font-family="SimSun, serif" font-size="12" text-anchor="middle" fill="white">
+      内存管理
+    </text>
+    <text x="630" y="595" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="white">
+      Memory Manager
+    </text>
+    
+    <!-- GPU计算单元 -->
+    <rect x="720" y="560" width="140" height="50" fill="#9b59b6" stroke="#8e44ad" stroke-width="1" rx="5"/>
+    <text x="790" y="580" font-family="SimSun, serif" font-size="12" text-anchor="middle" fill="white">
+      GPU计算单元
+    </text>
+    <text x="790" y="595" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="white">
+      GPU Compute
+    </text>
+    
+    <!-- 结果输出 -->
+    <rect x="880" y="560" width="140" height="50" fill="#16a085" stroke="#138d75" stroke-width="1" rx="5"/>
+    <text x="950" y="580" font-family="SimSun, serif" font-size="12" text-anchor="middle" fill="white">
+      结果输出
+    </text>
+    <text x="950" y="595" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="white">
+      Response Output
+    </text>
+    
+    <!-- 连接箭头 -->
+    <defs>
+      <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#34495e"/>
+      </marker>
+    </defs>
+    
+    <!-- 流程箭头 -->
+    <line x1="220" y1="585" x2="240" y2="585" stroke="#34495e" stroke-width="2" marker-end="url(#arrowhead)"/>
+    <line x1="380" y1="585" x2="400" y2="585" stroke="#34495e" stroke-width="2" marker-end="url(#arrowhead)"/>
+    <line x1="540" y1="585" x2="560" y2="585" stroke="#34495e" stroke-width="2" marker-end="url(#arrowhead)"/>
+    <line x1="700" y1="585" x2="720" y2="585" stroke="#34495e" stroke-width="2" marker-end="url(#arrowhead)"/>
+    <line x1="860" y1="585" x2="880" y2="585" stroke="#34495e" stroke-width="2" marker-end="url(#arrowhead)"/>
+    
+    <!-- 关键技术特性 -->
+    <rect x="80" y="640" width="200" height="80" fill="#ecf0f1" stroke="#7f8c8d" stroke-width="1" rx="5"/>
+    <text x="180" y="660" font-family="SimSun, serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#2c3e50">
+      PagedAttention
+    </text>
+    <text x="180" y="675" font-family="Times New Roman, serif" font-size="11" text-anchor="middle" fill="#7f8c8d">
+      • Memory Efficient
+    </text>
+    <text x="180" y="690" font-family="Times New Roman, serif" font-size="11" text-anchor="middle" fill="#7f8c8d">
+      • KV Cache Management
+    </text>
+    <text x="180" y="705" font-family="Times New Roman, serif" font-size="11" text-anchor="middle" fill="#7f8c8d">
+      • Dynamic Batching
+    </text>
+    
+    <rect x="300" y="640" width="200" height="80" fill="#ecf0f1" stroke="#7f8c8d" stroke-width="1" rx="5"/>
+    <text x="400" y="660" font-family="SimSun, serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#2c3e50">
+      Continuous Batching
+    </text>
+    <text x="400" y="675" font-family="Times New Roman, serif" font-size="11" text-anchor="middle" fill="#7f8c8d">
+      • Iteration-level Scheduling
+    </text>
+    <text x="400" y="690" font-family="Times New Roman, serif" font-size="11" text-anchor="middle" fill="#7f8c8d">
+      • Higher GPU Utilization
+    </text>
+    <text x="400" y="705" font-family="Times New Roman, serif" font-size="11" text-anchor="middle" fill="#7f8c8d">
+      • Reduced Waiting Time
+    </text>
+    
+    <rect x="520" y="640" width="200" height="80" fill="#ecf0f1" stroke="#7f8c8d" stroke-width="1" rx="5"/>
+    <text x="620" y="660" font-family="SimSun, serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#2c3e50">
+      Optimized Kernels
+    </text>
+    <text x="620" y="675" font-family="Times New Roman, serif" font-size="11" text-anchor="middle" fill="#7f8c8d">
+      • CUDA/ROCm Optimization
+    </text>
+    <text x="620" y="690" font-family="Times New Roman, serif" font-size="11" text-anchor="middle" fill="#7f8c8d">
+      • Flash Attention
+    </text>
+    <text x="620" y="705" font-family="Times New Roman, serif" font-size="11" text-anchor="middle" fill="#7f8c8d">
+      • Tensor Parallel
+    </text>
+    
+    <rect x="740" y="640" width="200" height="80" fill="#ecf0f1" stroke="#7f8c8d" stroke-width="1" rx="5"/>
+    <text x="840" y="660" font-family="SimSun, serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#2c3e50">
+      Quantization Support
+    </text>
+    <text x="840" y="675" font-family="Times New Roman, serif" font-size="11" text-anchor="middle" fill="#7f8c8d">
+      • AWQ/GPTQ/SqueezeLLM
+    </text>
+    <text x="840" y="690" font-family="Times New Roman, serif" font-size="11" text-anchor="middle" fill="#7f8c8d">
+      • Reduced Memory Usage
+    </text>
+    <text x="840" y="705" font-family="Times New Roman, serif" font-size="11" text-anchor="middle" fill="#7f8c8d">
+      • Faster Inference
+    </text>
+    
+    <rect x="960" y="640" width="160" height="80" fill="#ecf0f1" stroke="#7f8c8d" stroke-width="1" rx="5"/>
+    <text x="1040" y="660" font-family="SimSun, serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#2c3e50">
+      Speculative Decoding
+    </text>
+    <text x="1040" y="675" font-family="Times New Roman, serif" font-size="11" text-anchor="middle" fill="#7f8c8d">
+      • Draft Model
+    </text>
+    <text x="1040" y="690" font-family="Times New Roman, serif" font-size="11" text-anchor="middle" fill="#7f8c8d">
+      • Acceptance Rate
+    </text>
+    <text x="1040" y="705" font-family="Times New Roman, serif" font-size="11" text-anchor="middle" fill="#7f8c8d">
+      • Speedup Factor
+    </text>
+  </g>
+  
+  <!-- 连接线 -->
+  <g id="connections">
+    <!-- 测试框架到核心指标 -->
+    <line x1="330" y1="155" x2="400" y2="155" stroke="#7f8c8d" stroke-width="2" stroke-dasharray="5,5"/>
+    
+    <!-- 核心指标到公式 -->
+    <line x1="750" y1="155" x2="820" y2="155" stroke="#7f8c8d" stroke-width="2" stroke-dasharray="5,5"/>
+    
+    <!-- 测试流程到优化策略 -->
+    <line x1="550" y1="380" x2="600" y2="380" stroke="#7f8c8d" stroke-width="2" stroke-dasharray="5,5"/>
+    
+    <!-- 垂直连接 -->
+    <line x1="300" y1="480" x2="300" y2="520" stroke="#7f8c8d" stroke-width="2" stroke-dasharray="5,5"/>
+    <line x1="875" y1="480" x2="875" y2="520" stroke="#7f8c8d" stroke-width="2" stroke-dasharray="5,5"/>
+  </g>
+  
+  <!-- 版本信息 -->
+  <text x="50" y="770" font-family="Times New Roman, serif" font-size="10" fill="#7f8c8d">
+    Based on vLLM v0.6.0+ | Framework: vllm_benchmark_serving (fly branch)
+  </text>
+  
+  <!-- 性能提升数据 -->
+  <text x="600" y="770" font-family="Times New Roman, serif" font-size="10" fill="#7f8c8d">
+    Performance Improvement: 1.8-2.7x Throughput ↑ | 5x Latency ↓
+  </text>
+</svg>

@@ -1,0 +1,21 @@
+# 在这里设置模型名称和服务器基础URL
+model: "DeepSeek-R1-awq"        # 您在vllm服务器中设置的服务模型名称
+base_url: "http://localhost:8010"  # 或者 http://{ip地址}:{端口}
+tokenizer: "DeepSeek-R1-awq"  # 包含分词器文件的路径，您在vllm服务器中设置的路径
+# 对于随机数据集，您需要设置分词器，它将基于分词器生成随机数据集
+
+# input_tokens 和 output_tokens 分别是输入和输出文本中的令牌数量。
+# 例如，input_tokens: 256, output_tokens: 256 --> [256, 256]
+input_output:
+  - [256, 256]
+  #  - [2048, 2048]
+# max_concurrency 是可以发送到服务器的最大并发请求数。
+# num_prompts 是要发送到服务器的提示数量。
+# 例如，max_concurrency: 1, num_prompts: 10 --> [1, 10]
+concurrency_prompts:
+  - [1, 10]
+  - [4, 40]
+  # - [8, 80]
+  #- [16, 160]
+  #- [32, 320]
+  #- [48, 320]
