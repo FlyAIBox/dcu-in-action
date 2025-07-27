@@ -26,9 +26,9 @@ import subprocess
 import os
 
 # benchmark_serving.py脚本的路径
-BENCHMARK_SCRIPT = "benchmark_serving.py"
+BENCHMARK_SCRIPT = "vllm_benchmark/benchmark_serving.py"
 # YAML配置文件路径
-CONFIG_FILE = "combos.yaml"
+CONFIG_FILE = "configs/combos.yaml"
 
 
 def run_benchmark(common_args, input_len, output_len, concurrency, num_prompts):

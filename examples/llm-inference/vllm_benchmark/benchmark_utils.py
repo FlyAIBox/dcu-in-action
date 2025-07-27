@@ -15,8 +15,6 @@ benchmark_utils.py - 基准测试工具函数模块
 - InfEncoder: 自定义JSON编码器，处理无穷大值
 - write_to_json: 写入JSON文件的工具函数
 
-作者：vLLM团队
-修改：添加详细中文注释
 """
 
 # SPDX-License-Identifier: Apache-2.0

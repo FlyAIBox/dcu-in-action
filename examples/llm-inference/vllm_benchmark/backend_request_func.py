@@ -17,9 +17,6 @@ backend_request_func.py - 后端请求处理模块
 - RequestFuncOutput: 请求输出数据结构  
 - async_request_*: 各种后端的异步请求处理函数
 - get_model/get_tokenizer: 模型和分词器获取工具函数
-
-作者：vLLM团队
-修改：添加详细中文注释
 """
 
 # SPDX-License-Identifier: Apache-2.0

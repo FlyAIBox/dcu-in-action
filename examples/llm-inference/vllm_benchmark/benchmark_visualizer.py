@@ -31,9 +31,6 @@ vLLM推理服务的性能指标。主要功能包括：
 使用方法：
     visualizer = BenchmarkVisualizer("results/aggregate_results.csv")
     visualizer.generate_all_charts()
-
-作者：vLLM团队
-修改：添加详细中文注释
 """
 
 import pandas as pd

@@ -6,11 +6,11 @@ benchmark_serving.py - 在线推理服务基准测试主程序
 
 本模块是vLLM基准测试框架的核心程序，用于评估大语言模型在线推理服务的性能指标。
 主要功能包括：
-1. 多后端支持：支持vLLM、TGI、TensorRT-LLM、OpenAI API等多种推理后端
-2. 性能指标测量：精确测量延迟、吞吐量、TTFT(首个token时间)等关键指标
-3. 数据集支持：支持ShareGPT、HuggingFace、MTBench等多种数据集
-4. 并发控制：支持可配置的请求并发数和请求速率控制
-5. 结果分析：生成详细的性能分析报告和统计数据
+    1. 多后端支持: 支持vLLM、TGI、TensorRT-LLM、OpenAI API等多种推理后端
+    2. 性能指标测量: 精确测量延迟、吞吐量、TTFT(首个token时间)等关键指标
+    3. 数据集支持: 支持ShareGPT、HuggingFace、MTBench等多种数据集
+    4. 并发控制：支持可配置的请求并发数和请求速率控制
+    5. 结果分析：生成详细的性能分析报告和统计数据
 
 使用方法：
 服务器端运行：
@@ -26,9 +26,6 @@ benchmark_serving.py - 在线推理服务基准测试主程序
         --num-prompts <num_prompts>
 
 注意：使用TGI后端时，需要添加 --endpoint /generate_stream 参数
-
-作者：vLLM团队
-修改：添加详细中文注释
 """
 
 # SPDX-License-Identifier: Apache-2.0
@@ -93,34 +90,34 @@ class BenchmarkMetrics:
     """
     基准测试指标数据结构
     
-    包含了基准测试过程中收集的所有性能指标和统计数据。
-    这些指标用于全面评估推理服务的性能表现。
+    包含了基准测试过程中收集的所有性能指标和统计数据.
+    这些指标用于全面评估推理服务的性能表现.
     """
     completed: int                                    # 成功完成的请求数量
     total_input: int                                  # 输入token总数
     total_output: int                                 # 输出token总数
-    request_throughput: float                         # 请求吞吐量（请求/秒）
-    request_goodput: float                            # 有效请求吞吐量（满足SLA的请求/秒）
-    output_throughput: float                          # 输出token吞吐量（token/秒）
-    total_token_throughput: float                     # 总token吞吐量（输入+输出token/秒）
-    mean_ttft_ms: float                              # TTFT平均值（毫秒）
-    median_ttft_ms: float                            # TTFT中位数（毫秒）
-    std_ttft_ms: float                               # TTFT标准差（毫秒）
-    percentiles_ttft_ms: list[tuple[float, float]]   # TTFT百分位数列表（毫秒）
-    mean_tpot_ms: float                              # TPOT平均值（毫秒）
-    median_tpot_ms: float                            # TPOT中位数（毫秒）
-    std_tpot_ms: float                               # TPOT标准差（毫秒）
-    percentiles_tpot_ms: list[tuple[float, float]]   # TPOT百分位数列表（毫秒）
-    mean_itl_ms: float                               # ITL平均值（毫秒）
-    median_itl_ms: float                             # ITL中位数（毫秒）
-    std_itl_ms: float                                # ITL标准差（毫秒）
-    percentiles_itl_ms: list[tuple[float, float]]    # ITL百分位数列表（毫秒）
-    # E2EL代表端到端延迟（End-to-End Latency）
+    request_throughput: float                         # 请求吞吐量(请求/秒)
+    request_goodput: float                            # 有效请求吞吐量(满足SLA的请求/秒)
+    output_throughput: float                          # 输出token吞吐量(token/秒)
+    total_token_throughput: float                     # 总token吞吐量(输入+输出token/秒)
+    mean_ttft_ms: float                              # TTFT平均值(毫秒)
+    median_ttft_ms: float                            # TTFT中位数(毫秒)
+    std_ttft_ms: float                               # TTFT标准差(毫秒)
+    percentiles_ttft_ms: list[tuple[float, float]]   # TTFT百分位数列表(毫秒)
+    mean_tpot_ms: float                              # TPOT平均值(毫秒)
+    median_tpot_ms: float                            # TPOT中位数(毫秒)
+    std_tpot_ms: float                               # TPOT标准差(毫秒)
+    percentiles_tpot_ms: list[tuple[float, float]]   # TPOT百分位数列表(毫秒)
+    mean_itl_ms: float                               # ITL平均值(毫秒)
+    median_itl_ms: float                             # ITL中位数(毫秒)
+    std_itl_ms: float                                # ITL标准差(毫秒)
+    percentiles_itl_ms: list[tuple[float, float]]    # ITL百分位数列表(毫秒)
+    # E2EL代表端到端延迟(End-to-End Latency)
     # 从客户端发送请求到接收完整响应的总时间
-    mean_e2el_ms: float                              # E2EL平均值（毫秒）
-    median_e2el_ms: float                            # E2EL中位数（毫秒）
-    std_e2el_ms: float                               # E2EL标准差（毫秒）
-    percentiles_e2el_ms: list[tuple[float, float]]   # E2EL百分位数列表（毫秒）
+    mean_e2el_ms: float                              # E2EL平均值(毫秒)
+    median_e2el_ms: float                            # E2EL中位数(毫秒)
+    std_e2el_ms: float                               # E2EL标准差(毫秒)
+    percentiles_e2el_ms: list[tuple[float, float]]   # E2EL百分位数列表(毫秒)
 
 
 async def get_request(
@@ -131,26 +128,26 @@ async def get_request(
     """
     异步请求生成器 - 按指定速率和突发性模式生成测试请求
 
-    这个函数是压测的核心组件，控制请求的发送时机和模式，模拟真实的用户请求场景。
-    它支持两种主要的请求发送模式：批量模式和流量控制模式。
+    这个函数是压测的核心组件, 控制请求的发送时机和模式, 模拟真实的用户请求场景.
+    它支持两种主要的请求发送模式: 批量模式和流量控制模式.
 
     参数说明:
         input_requests: list[SampleRequest]
-            待发送的请求列表，每个请求包含prompt、长度等信息
+            待发送的请求列表, 每个请求包含prompt, 长度等信息
         request_rate: float
             请求发送速率 (请求/秒)
-            - 如果为 inf，则立即发送所有请求 (批量模式)
-            - 如果为有限值，则按指定速率发送 (流量控制模式)
-        burstiness: float, 可选参数，默认1.0
-            请求突发性因子，控制请求到达的时间分布模式
+            - 如果为 inf, 则立即发送所有请求 (批量模式)
+            - 如果为有限值, 则按指定速率发送 (流量控制模式)
+        burstiness: float, 可选参数, 默认1.0
+            请求突发性因子, 控制请求到达的时间分布模式
             - 仅在 request_rate 不为 inf 时生效
-            - 默认值1.0: 遵循泊松过程 (Poisson process)，请求间隔呈指数分布
+            - 默认值1.0: 遵循泊松过程 (Poisson process), 请求间隔呈指数分布
             - 其他值: 请求间隔遵循伽马分布 (Gamma distribution)
             - 0 < burstiness < 1: 更突发的请求模式 (请求更集中)
             - burstiness > 1: 更均匀的请求到达模式 (请求更分散)
 
     返回:
-        AsyncGenerator[SampleRequest, None]: 异步生成器，按时序产生请求对象
+        AsyncGenerator[SampleRequest, None]: 异步生成器, 按时序产生请求对象
 
     应用场景:
         - 批量测试: request_rate=inf, 测试系统最大处理能力
@@ -158,9 +155,9 @@ async def get_request(
         - 突发测试: 调整burstiness, 测试系统对流量波动的适应性
 
     实现原理:
-        使用numpy的伽马分布生成请求间隔时间，当burstiness=1时退化为指数分布，
-        这样可以更真实地模拟用户请求的随机性和突发性特征。
-
+        使用numpy的伽马分布生成请求间隔时间, 当burstiness=1时退化为指数分布,
+        这样可以更真实地模拟用户请求的随机性和突发性特征.
+    """
     input_requests: Iterable[SampleRequest] = iter(input_requests)
 
     # 计算尺度参数theta以维持期望的请求速率
@@ -193,29 +190,28 @@ def calculate_metrics(
     goodput_config_dict: dict[str, float],
 ) -> tuple[BenchmarkMetrics, list[int]]:
     """
-    计算基准测试性能指标
-    
-    根据输入请求和输出结果计算详细的性能指标，包括延迟、吞吐量、
-    百分位数等统计数据。这些指标用于全面评估推理服务的性能表现。
-    
-    Args:
-        input_requests: 输入请求列表
-        outputs: 输出结果列表，与输入请求一一对应
-        dur_s: 基准测试总持续时间（秒）
-        tokenizer: 用于token计算的分词器
-        selected_percentile_metrics: 需要计算百分位数的指标列表
-        selected_percentiles: 需要计算的百分位数列表
-        goodput_config_dict: 有效吞吐量配置字典（SLA阈值）
-        
-    Returns:
+    计算基准测试性能指标。
+
+    本函数基于输入请求和输出结果，计算详细的性能指标，包括延迟、吞吐量、分位数等。这些指标用于全面评估推理服务的性能。
+
+    参数说明:
+        input_requests: 输入请求列表。
+        outputs: 输出结果列表，与输入请求一一对应。
+        dur_s: 基准测试总时长（秒）。
+        tokenizer: 用于计算token数量的分词器。
+        selected_percentile_metrics: 需要计算分位数的指标名称列表。
+        selected_percentiles: 需要计算的分位数列表。
+        goodput_config_dict: Goodput配置字典（SLA阈值）。
+
+    返回:
         tuple[BenchmarkMetrics, list[int]]: 
-            - BenchmarkMetrics: 包含所有性能指标的数据结构
-            - list[int]: 每个请求的实际输出token长度列表
-            
-    Note:
-        - 计算TTFT(首个token时间)、TPOT(每token时间)、ITL(token间延迟)等指标
-        - 支持goodput计算，即满足SLA要求的有效吞吐量
-        - 自动处理失败的请求，确保统计数据的准确性
+            - BenchmarkMetrics: 包含所有性能指标的数据结构。
+            - list[int]: 每个请求实际输出的token长度列表。
+
+    备注:
+        - 计算TTFT（首token时间）、TPOT（每token生成时间）、ITL（token间延迟）等指标。
+        - 支持goodput（满足SLA请求的吞吐量）计算。
+        - 自动处理失败请求，确保统计结果准确。
     """
     actual_output_lens: list[int] = []
     total_input = 0
@@ -249,6 +245,7 @@ def calculate_metrics(
                 tpot = latency_minus_ttft / (output_len - 1)
                 tpots.append(tpot)
             # Note: if output_len <= 1, we regard tpot as 0 for goodput
+            # 注意：如果 output_len <= 1，则 goodput 统计时 tpot 记为 0
             all_tpots.append(tpot)
             itls += outputs[i].itl
             ttfts.append(outputs[i].ttft)
@@ -336,12 +333,12 @@ async def benchmark(
     input_requests: list[SampleRequest],             # 测试请求列表
     logprobs: Optional[int],                         # 返回的对数概率数量
     request_rate: float,                             # 请求发送速率 (req/s)
-    burstiness: float,                               # 请求突发性因子
+    burstiness: float,                               # 请求到达的突发性因子, 1.0为泊松过程
     disable_tqdm: bool,                              # 是否禁用进度条
     profile: bool,                                   # 是否启用性能分析
     selected_percentile_metrics: list[str],          # 需要计算百分位数的指标
-    selected_percentiles: list[float],               # 需要计算的百分位数列表
-    ignore_eos: bool,                                # 是否忽略EOS token
+    selected_percentiles: list[float],               # 需要计算的百分位数列表(如[50, 90, 99])
+    ignore_eos: bool,                                # 是否在请求中设置ignore_eos标志
     goodput_config_dict: dict[str, float],           # 有效吞吐量SLA配置
     max_concurrency: Optional[int],                  # 最大并发请求数
     lora_modules: Optional[Iterable[str]],           # LoRA模块列表
@@ -350,42 +347,42 @@ async def benchmark(
     """
     执行基准测试的核心异步函数
 
-    这是整个基准测试框架的核心函数，负责协调所有测试组件，执行完整的性能测试流程。
+    这是整个基准测试框架的核心函数, 负责协调所有测试组件, 执行完整的性能测试流程.
 
-    主要功能：
+    主要功能:
     1. 初始化测试环境和验证连接
     2. 配置请求生成器和并发控制
     3. 执行并发请求测试
     4. 收集和计算性能指标
     5. 生成详细的测试报告
 
-    测试流程：
-    1. 预热测试：发送单个测试请求验证连接
-    2. 性能分析：可选启动profiler进行深度分析
-    3. 并发测试：按配置的速率和并发数发送请求
-    4. 指标计算：统计TTFT、TPOT、ITL、E2EL等关键指标
-    5. 结果输出：生成格式化的测试报告
+    测试流程:
+    1. 预热测试: 发送单个测试请求验证连接
+    2. 性能分析: 可选启动profiler进行深度分析
+    3. 并发测试: 按配置的速率和并发数发送请求
+    4. 指标计算: 统计TTFT, TPOT, ITL, E2EL等关键指标
+    5. 结果输出: 生成格式化的测试报告
 
     Args:
-        backend: 推理后端类型，支持vllm、tgi、openai等
+        backend: 推理后端类型, 支持vllm, tgi, openai等
         api_url: API服务的完整URL地址
-        base_url: 服务的基础URL，用于profile等管理功能
+        base_url: 服务的基础URL, 用于profile等管理功能
         model_id: 模型的唯一标识符
-        model_name: 模型的显示名称（可与model_id不同）
+        model_name: 模型的显示名称(可与model_id不同)
         tokenizer: 用于token计算的分词器实例
         input_requests: 包含所有测试请求的列表
-        logprobs: 每个token返回的对数概率数量（可选）
-        request_rate: 请求发送速率，单位为请求/秒，inf表示批量发送
-        burstiness: 请求到达的突发性因子，1.0为泊松过程
+        logprobs: 每个token返回的对数概率数量(可选)
+        request_rate: 请求发送速率, 单位为请求/秒, inf表示批量发送
+        burstiness: 请求到达的突发性因子, 1.0为泊松过程
         disable_tqdm: 是否禁用进度条显示
         profile: 是否启用Torch Profiler进行性能分析
         selected_percentile_metrics: 需要计算百分位数的指标列表
-        selected_percentiles: 需要计算的百分位数列表（如[50, 90, 99]）
+        selected_percentiles: 需要计算的百分位数列表(如[50, 90, 99])
         ignore_eos: 是否在请求中设置ignore_eos标志
         goodput_config_dict: 有效吞吐量的SLA阈值配置
         max_concurrency: 最大并发请求数限制
-        lora_modules: LoRA适配器模块列表（可选）
-        extra_body: 额外的请求体参数（如采样参数）
+        lora_modules: LoRA适配器模块列表(可选)
+        extra_body: 额外的请求体参数(如采样参数)
 
     Returns:
         dict: 包含所有性能指标和测试结果的字典
@@ -395,9 +392,9 @@ async def benchmark(
 
     Note:
         - 函数会自动进行预热测试以验证配置正确性
-        - 支持可选的性能分析模式，需要服务端配置VLLM_TORCH_PROFILER_DIR
-        - 并发控制通过信号量实现，避免过载服务器
-        - 所有时间指标以秒为单位收集，最终转换为毫秒显示
+        - 支持可选的性能分析模式, 需要服务端配置VLLM_TORCH_PROFILER_DIR
+        - 并发控制通过信号量实现, 避免过载服务器
+        - 所有时间指标以秒为单位收集, 最终转换为毫秒显示
     """
     if backend in ASYNC_REQUEST_FUNCS:
         request_func = ASYNC_REQUEST_FUNCS[backend]
@@ -593,8 +590,8 @@ async def benchmark(
         # E.g., "Time to First Token"
         metric_header: str,
     ):
-        # This function prints and adds statistics of the specified
-        # metric.
+        # This function prints and adds statistics of the specified metric.
+        # 此函数用于打印并添加指定指标的统计信息。
         if metric_attribute_name not in selected_percentile_metrics:
             return
         print("{s:{c}^{n}}".format(s=metric_header, n=50, c="-"))
@@ -901,6 +898,7 @@ def main(args: argparse.Namespace):
     )
 
     # Save config and results to json
+    # 保存配置和结果到 json 文件
     if args.save_result or args.append_result:
         result_json: dict[str, Any] = {}
 

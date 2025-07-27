@@ -16,9 +16,6 @@ aggregate_result.py - 基准测试结果聚合模块
 - 例如：bench_io256x256_mc32_np128.json 表示输入长度256，输出长度256
 
 依赖要求：pip install pandas
-
-作者：vLLM团队
-修改：添加详细中文注释
 """
 
 import glob
