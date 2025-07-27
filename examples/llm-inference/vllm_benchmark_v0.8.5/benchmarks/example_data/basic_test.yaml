@@ -1,0 +1,21 @@
+# 基本测试配置
+model: "meta-llama/Llama-2-7b-hf"
+backend: "vllm"
+endpoint: "/v1/completions"
+host: "localhost"
+port: 8000
+
+# 使用随机数据集（不需要下载）
+dataset_name: "random"
+num_prompts: 20
+input_len: 512
+output_len: 64
+
+# 测试参数
+request_rate: 1.0
+seed: 42
+
+# 输出配置
+save_result: true
+result_dir: "./example_results/basic_test"
+enable_visualization: true

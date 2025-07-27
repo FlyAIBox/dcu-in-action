@@ -1,24 +1,34 @@
 # SPDX-License-Identifier: Apache-2.0
-r"""Benchmark online serving throughput.
+r"""
+vLLM在线服务基准测试脚本
 
-On the server side, run one of the following commands:
-    vLLM OpenAI API server
+这个脚本用于测试vLLM在线服务的性能，包括吞吐量、延迟等关键指标。
+它通过向运行中的vLLM服务发送并发请求来模拟真实的服务负载。
+
+服务端启动命令示例:
+    vLLM OpenAI API服务器
     vllm serve <your_model> \
         --swap-space 16 \
         --disable-log-requests
 
-On the client side, run:
+客户端测试命令示例:
     python benchmarks/benchmark_serving.py \
         --backend <backend> \
         --model <your_model> \
         --dataset-name sharegpt \
         --dataset-path <path to dataset> \
-        --request-rate <request_rate> \ # By default <request_rate> is inf
-        --num-prompts <num_prompts> # By default <num_prompts> is 1000
+        --request-rate <request_rate> \ # 默认为inf（无限制）
+        --num-prompts <num_prompts> # 默认为1000个请求
 
-    when using tgi backend, add
+    使用TGI后端时，需要添加:
         --endpoint /generate_stream
-    to the end of the command above.
+
+主要功能:
+- 支持多种后端（vLLM、OpenAI、TGI等）
+- 支持多种数据集（ShareGPT、Random、Sonnet等）
+- 测量关键性能指标（TTFT、TPOT、ITL等）
+- 支持可配置的请求速率和并发度
+- 生成详细的性能报告
 """
 import argparse
 import asyncio
@@ -62,32 +72,48 @@ MILLISECONDS_TO_SECONDS_CONVERSION = 1000
 
 @dataclass
 class BenchmarkMetrics:
-    completed: int
-    total_input: int
-    total_output: int
-    request_throughput: float
-    request_goodput: float
-    output_throughput: float
-    total_token_throughput: float
-    mean_ttft_ms: float
-    median_ttft_ms: float
-    std_ttft_ms: float
-    percentiles_ttft_ms: list[tuple[float, float]]
-    mean_tpot_ms: float
-    median_tpot_ms: float
-    std_tpot_ms: float
-    percentiles_tpot_ms: list[tuple[float, float]]
-    mean_itl_ms: float
-    median_itl_ms: float
-    std_itl_ms: float
-    percentiles_itl_ms: list[tuple[float, float]]
-    # E2EL stands for end-to-end latency per request.
-    # It is the time taken on the client side from sending
-    # a request to receiving a complete response.
-    mean_e2el_ms: float
-    median_e2el_ms: float
-    std_e2el_ms: float
-    percentiles_e2el_ms: list[tuple[float, float]]
+    """
+    基准测试指标数据类
+
+    这个数据类包含了基准测试的所有关键性能指标，用于存储和传递测试结果。
+    每个指标都有明确的含义和用途，帮助分析模型的推理性能。
+    """
+
+    # ==================== 基本统计指标 ====================
+    completed: int                              # 成功完成的请求数量
+    total_input: int                           # 所有请求的输入token总数
+    total_output: int                          # 所有请求的输出token总数
+
+    # ==================== 吞吐量指标 ====================
+    request_throughput: float                  # 请求吞吐量 (requests/second)
+    request_goodput: float                     # 有效请求吞吐量 (考虑质量的吞吐量)
+    output_throughput: float                   # 输出token吞吐量 (tokens/second)
+    total_token_throughput: float              # 总token吞吐量 (输入+输出 tokens/second)
+
+    # ==================== TTFT (Time To First Token) 指标 ====================
+    mean_ttft_ms: float                        # TTFT平均值 (毫秒)
+    median_ttft_ms: float                      # TTFT中位数 (毫秒)
+    std_ttft_ms: float                         # TTFT标准差 (毫秒)
+    percentiles_ttft_ms: list[tuple[float, float]]  # TTFT百分位数 [(百分位, 值)]
+
+    # ==================== TPOT (Time Per Output Token) 指标 ====================
+    mean_tpot_ms: float                        # TPOT平均值 (毫秒)
+    median_tpot_ms: float                      # TPOT中位数 (毫秒)
+    std_tpot_ms: float                         # TPOT标准差 (毫秒)
+    percentiles_tpot_ms: list[tuple[float, float]]  # TPOT百分位数 [(百分位, 值)]
+
+    # ==================== ITL (Inter-Token Latency) 指标 ====================
+    mean_itl_ms: float                         # ITL平均值 (毫秒)
+    median_itl_ms: float                       # ITL中位数 (毫秒)
+    std_itl_ms: float                          # ITL标准差 (毫秒)
+    percentiles_itl_ms: list[tuple[float, float]]   # ITL百分位数 [(百分位, 值)]
+
+    # ==================== E2EL (End-to-End Latency) 指标 ====================
+    # E2EL表示端到端延迟，即从客户端发送请求到接收完整响应的总时间
+    mean_e2el_ms: float                        # E2EL平均值 (毫秒)
+    median_e2el_ms: float                      # E2EL中位数 (毫秒)
+    std_e2el_ms: float                         # E2EL标准差 (毫秒)
+    percentiles_e2el_ms: list[tuple[float, float]]  # E2EL百分位数 [(百分位, 值)]
 
 
 async def get_request(
@@ -96,41 +122,44 @@ async def get_request(
     burstiness: float = 1.0,
 ) -> AsyncGenerator[SampleRequest, None]:
     """
-    Asynchronously generates requests at a specified rate
-    with OPTIONAL burstiness.
+    异步请求生成器 - 按指定速率和突发性生成测试请求
+
+    这个函数是基准测试的核心组件，负责控制请求的发送时机和模式。
+    它可以模拟不同的负载场景，从恒定速率到突发性负载。
 
     Args:
-        input_requests:
-            A list of input requests, each represented as a SampleRequest.
-        request_rate:
-            The rate at which requests are generated (requests/s).
-        burstiness (optional):
-            The burstiness factor of the request generation.
-            Only takes effect when request_rate is not inf.
-            Default value is 1, which follows a Poisson process.
-            Otherwise, the request intervals follow a gamma distribution.
-            A lower burstiness value (0 < burstiness < 1) results
-            in more bursty requests, while a higher burstiness value
-            (burstiness > 1) results in a more uniform arrival of requests.
+        input_requests: 输入请求列表，每个请求都是SampleRequest对象
+        request_rate: 请求生成速率 (requests/second)
+                     - float("inf"): 立即发送所有请求（最大压力测试）
+                     - 正数: 按指定速率发送请求
+        burstiness: 突发性因子 (可选，默认1.0)
+                   - 仅在request_rate不为inf时生效
+                   - 1.0: 遵循泊松过程（指数分布间隔）
+                   - 其他值: 请求间隔遵循伽马分布
+                   - 较低值(0 < burstiness < 1): 更突发的请求模式
+                   - 较高值(burstiness > 1): 更均匀的请求到达
+
+    Yields:
+        SampleRequest: 按时间间隔生成的请求对象
     """
     input_requests: Iterable[SampleRequest] = iter(input_requests)
 
-    # Calculate scale parameter theta to maintain the desired request_rate.
+    # 计算伽马分布的尺度参数theta，以维持期望的请求速率
     assert burstiness > 0, (
-        f"A positive burstiness factor is expected, but given {burstiness}.")
+        f"突发性因子必须为正数，但给定值为 {burstiness}.")
     theta = 1.0 / (request_rate * burstiness)
 
     for request in input_requests:
         yield request
 
         if request_rate == float("inf"):
-            # If the request rate is infinity, then we don't need to wait.
+            # 如果请求速率为无穷大，则不需要等待，立即发送下一个请求
             continue
 
-        # Sample the request interval from the gamma distribution.
-        # If burstiness is 1, it follows exponential distribution.
+        # 从伽马分布中采样请求间隔
+        # 当burstiness=1时，退化为指数分布
         interval = np.random.gamma(shape=burstiness, scale=theta)
-        # The next request will be sent after the interval.
+        # 等待指定间隔后发送下一个请求
         await asyncio.sleep(interval)
 
 

@@ -1,17 +1,29 @@
 # SPDX-License-Identifier: Apache-2.0
 """
-This module defines a framework for sampling benchmark requests from various
-datasets. Each dataset subclass of BenchmarkDataset must implement sample
-generation. Supported dataset types include:
-  - ShareGPT
-  - Random (synthetic)
-  - Sonnet
-  - BurstGPT
-  - HuggingFace
-  - VisionArena
+基准测试数据集模块
 
-TODO: Implement CustomDataset to parse a JSON file and convert its contents into
-SampleRequest instances, similar to the approach used in ShareGPT.
+这个模块定义了从各种数据集中采样基准测试请求的框架。每个BenchmarkDataset的
+子类都必须实现样本生成功能。该模块是vLLM基准测试系统的核心组件之一。
+
+支持的数据集类型包括:
+  - ShareGPT: 真实的对话数据集，包含用户和助手的多轮对话
+  - Random: 合成的随机数据，用于控制变量的性能测试
+  - Sonnet: 诗歌文本数据集，用于文学文本生成测试
+  - BurstGPT: 专门的突发性负载测试数据集
+  - HuggingFace: 来自HuggingFace Hub的各种数据集
+  - VisionArena: 视觉语言模型的多模态数据集
+  - InstructCoder: 代码生成和指令跟随数据集
+  - AIMO: 数学推理和问题解决数据集
+
+主要功能:
+- 统一的数据集接口和抽象基类
+- 支持多模态数据（文本+图像）
+- 自动tokenization和长度计算
+- 支持LoRA适配器的随机选择
+- 可配置的随机种子确保结果可重现
+
+TODO: 实现CustomDataset来解析JSON文件并将其内容转换为SampleRequest实例，
+类似于ShareGPT中使用的方法。
 """
 
 import base64
@@ -47,14 +59,24 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SampleRequest:
     """
-    Represents a single inference request for benchmarking.
+    单个推理请求的数据结构
+
+    这个数据类表示基准测试中的一个推理请求，包含了执行推理所需的
+    所有信息。它是数据集和基准测试脚本之间的标准接口。
+
+    Attributes:
+        prompt: 输入提示，可以是字符串或其他格式（如chat格式的列表）
+        prompt_len: 提示的token长度，用于性能分析和统计
+        expected_output_len: 期望的输出token长度，用于控制生成长度
+        multi_modal_data: 多模态数据（如图像），用于视觉语言模型
+        lora_request: LoRA适配器请求，用于支持LoRA微调的模型
     """
 
-    prompt: Union[str, Any]
-    prompt_len: int
-    expected_output_len: int
-    multi_modal_data: Optional[Union[MultiModalDataDict, dict]] = None
-    lora_request: Optional[LoRARequest] = None
+    prompt: Union[str, Any]                                      # 输入提示文本或结构化数据
+    prompt_len: int                                             # 提示的token长度
+    expected_output_len: int                                    # 期望输出的token长度
+    multi_modal_data: Optional[Union[MultiModalDataDict, dict]] = None  # 多模态数据（图像等）
+    lora_request: Optional[LoRARequest] = None                  # LoRA适配器请求
 
 
 # -----------------------------------------------------------------------------
@@ -63,8 +85,20 @@ class SampleRequest:
 
 
 class BenchmarkDataset(ABC):
-    DEFAULT_SEED = 0
-    IS_MULTIMODAL = False
+    """
+    基准测试数据集抽象基类
+
+    这个抽象基类定义了所有基准测试数据集必须实现的接口。它提供了
+    数据集管理的通用功能，包括数据加载、请求采样、多模态支持等。
+
+    所有具体的数据集类都应该继承这个基类并实现抽象方法。
+
+    Class Attributes:
+        DEFAULT_SEED: 默认随机种子，确保结果可重现
+        IS_MULTIMODAL: 标识数据集是否包含多模态数据（如图像）
+    """
+    DEFAULT_SEED = 0        # 默认随机种子
+    IS_MULTIMODAL = False   # 是否为多模态数据集
 
     def __init__(
         self,
@@ -72,19 +106,17 @@ class BenchmarkDataset(ABC):
         random_seed: int = DEFAULT_SEED,
     ) -> None:
         """
-        Initialize the BenchmarkDataset with an optional dataset path and random
-        seed.  Args:
-            dataset_path (Optional[str]): Path to the dataset. If None, it
-            indicates that a default or random dataset might be used.
-            random_seed (int): Seed value for reproducible shuffling or
-            sampling. Defaults to DEFAULT_SEED.
+        初始化基准测试数据集
+
+        Args:
+            dataset_path: 数据集文件路径。如果为None，表示可能使用默认或随机数据集
+            random_seed: 随机种子，用于可重现的数据打乱或采样。默认为DEFAULT_SEED
         """
         self.dataset_path = dataset_path
-        # Set the random seed, ensuring that a None value is replaced with the
-        # default seed.
+        # 设置随机种子，确保None值被替换为默认种子
         self.random_seed = (random_seed
                             if random_seed is not None else self.DEFAULT_SEED)
-        self.data = None
+        self.data = None  # 存储加载的数据集内容
 
     def apply_multimodal_chat_transformation(
             self,

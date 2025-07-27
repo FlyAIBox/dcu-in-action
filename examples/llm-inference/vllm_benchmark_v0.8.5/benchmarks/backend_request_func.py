@@ -1,4 +1,25 @@
 # SPDX-License-Identifier: Apache-2.0
+"""
+后端请求函数模块
+
+这个模块定义了与不同推理后端通信的请求函数。它是基准测试系统的核心组件，
+负责向各种推理服务发送HTTP请求并收集响应数据。
+
+支持的后端类型：
+- vLLM: vLLM推理服务器
+- OpenAI: OpenAI兼容的API服务
+- TGI: Text Generation Inference服务
+- 其他兼容OpenAI API的服务
+
+主要功能：
+- 异步HTTP请求处理
+- 流式响应解析
+- 性能指标收集（TTFT、TPOT、ITL等）
+- 错误处理和重试机制
+- 多种数据格式支持
+
+注意：这个模块故意不导入vLLM，这样基准测试脚本可以在没有安装vLLM的情况下运行。
+"""
 
 import io
 import json
@@ -15,39 +36,74 @@ from tqdm.asyncio import tqdm
 from transformers import (AutoTokenizer, PreTrainedTokenizer,
                           PreTrainedTokenizerFast)
 
-# NOTE(simon): do not import vLLM here so the benchmark script
-# can run without vLLM installed.
+# 注意：这里故意不导入vLLM，这样基准测试脚本可以在没有安装vLLM的情况下运行
 
+# HTTP客户端超时设置：6小时，适应长时间的推理任务
 AIOHTTP_TIMEOUT = aiohttp.ClientTimeout(total=6 * 60 * 60)
 
 
 @dataclass
 class RequestFuncInput:
-    prompt: str
-    api_url: str
-    prompt_len: int
-    output_len: int
-    model: str
-    model_name: Optional[str] = None
-    logprobs: Optional[int] = None
-    extra_body: Optional[dict] = None
-    multi_modal_content: Optional[dict] = None
-    ignore_eos: bool = False
-    language: Optional[str] = None
+    """
+    请求函数输入参数数据类
+
+    这个数据类包含了向推理后端发送请求所需的所有参数。
+    它是不同后端请求函数的标准输入接口。
+
+    Attributes:
+        prompt: 输入提示文本
+        api_url: API端点URL
+        prompt_len: 提示的token长度
+        output_len: 期望输出的token长度
+        model: 模型名称或路径
+        model_name: 可选的模型显示名称
+        logprobs: 返回的log概率数量
+        extra_body: 额外的请求体参数
+        multi_modal_content: 多模态内容（如图像）
+        ignore_eos: 是否忽略结束符token
+        language: 语言标识符
+    """
+    prompt: str                                 # 输入提示文本
+    api_url: str                               # API端点URL
+    prompt_len: int                            # 提示token长度
+    output_len: int                            # 期望输出token长度
+    model: str                                 # 模型名称
+    model_name: Optional[str] = None           # 可选的模型显示名称
+    logprobs: Optional[int] = None             # log概率数量
+    extra_body: Optional[dict] = None          # 额外请求参数
+    multi_modal_content: Optional[dict] = None # 多模态内容
+    ignore_eos: bool = False                   # 是否忽略EOS token
+    language: Optional[str] = None             # 语言标识
 
 
 @dataclass
 class RequestFuncOutput:
-    generated_text: str = ""
-    success: bool = False
-    latency: float = 0.0
-    output_tokens: int = 0
-    ttft: float = 0.0  # Time to first token
-    itl: list[float] = field(
-        default_factory=list)  # list of inter-token latencies
-    tpot: float = 0.0  # avg next-token latencies
-    prompt_len: int = 0
-    error: str = ""
+    """
+    请求函数输出结果数据类
+
+    这个数据类包含了推理请求的完整结果，包括生成的文本、
+    性能指标和错误信息。它是所有后端请求函数的标准输出格式。
+
+    Attributes:
+        generated_text: 生成的文本内容
+        success: 请求是否成功
+        latency: 总延迟时间（秒）
+        output_tokens: 输出token数量
+        ttft: 首token时间（秒）
+        itl: token间延迟列表（秒）
+        tpot: 平均每token时间（秒）
+        prompt_len: 提示长度
+        error: 错误信息
+    """
+    generated_text: str = ""                   # 生成的文本
+    success: bool = False                      # 是否成功
+    latency: float = 0.0                       # 总延迟（秒）
+    output_tokens: int = 0                     # 输出token数
+    ttft: float = 0.0                          # 首token时间（秒）
+    itl: list[float] = field(default_factory=list)  # token间延迟列表（秒）
+    tpot: float = 0.0                          # 平均每token时间（秒）
+    prompt_len: int = 0                        # 提示长度
+    error: str = ""                            # 错误信息
 
 
 async def async_request_tgi(

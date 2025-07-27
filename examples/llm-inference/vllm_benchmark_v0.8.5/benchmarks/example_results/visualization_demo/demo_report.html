@@ -1,0 +1,61 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>vLLM基准测试报告</title>
+        <meta charset="utf-8">
+        <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            .header { text-align: center; color: #333; }
+            .section { margin: 20px 0; }
+            .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+            .metric-card { background: #f5f5f5; padding: 15px; border-radius: 8px; }
+            .chart { text-align: center; margin: 20px 0; }
+            .chart img { max-width: 100%; height: auto; }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>vLLM基准测试报告</h1>
+            <p>生成时间: 2025-07-27 18:07:10</p>
+        </div>
+        
+        <div class="section">
+            <h2>测试配置</h2>
+            <div class="metrics">
+                <div class="metric-card">
+                    <h3>模型信息</h3>
+                    <p>模型: meta-llama/Llama-2-7b-hf</p>
+                    <p>后端: vllm</p>
+                </div>
+                <div class="metric-card">
+                    <h3>数据集信息</h3>
+                    <p>数据集: random</p>
+                    <p>请求数: 100</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>性能指标</h2>
+            <div class="metrics">
+                <div class="metric-card">
+                    <h3>吞吐量</h3>
+                    <p>请求吞吐量: 8.50 req/s</p>
+                    <p>Token吞吐量: 425.60 tok/s</p>
+                </div>
+                <div class="metric-card">
+                    <h3>延迟</h3>
+                    <p>平均TTFT: 95.96 ms</p>
+                    <p>平均TPOT: 30.19 ms</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>可视化图表</h2>
+            <div class="chart"><img src="./example_results/visualization_demo/demo_chart.png" alt="测试结果图表"></div>
+        </div>
+    </body>
+    </html>
+    

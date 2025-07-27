@@ -1,0 +1,15 @@
+# vllm
+transformers==4.45.0
+aiohttp==3.11.18
+pandas==2.1.3
+datasets==2.16.0
+matplotlib==3.7.0
+seaborn==0.11.0
+numpy==1.25.0
+plotly==5.0.0
+# 海光DCU K100-AI(DTK25.04)
+# vllm==0.6.2+das.opt3.dtk2504
+# transformers==4.45.0
+# aiohttp==3.11.18
+# pandas==2.1.3
+# datasets==2.14.1
