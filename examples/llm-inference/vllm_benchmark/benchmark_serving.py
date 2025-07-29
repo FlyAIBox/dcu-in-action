@@ -57,6 +57,7 @@ from backend_request_func import (
 try:
     from vllm.transformers_utils.tokenizer import get_tokenizer
 except ImportError:
+    # 当 vllm 不可用时，使用本地的 get_tokenizer 实现
     from backend_request_func import get_tokenizer
 
 try:

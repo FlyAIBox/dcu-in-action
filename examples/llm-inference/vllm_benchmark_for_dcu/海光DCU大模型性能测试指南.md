@@ -93,7 +93,7 @@
   vllm serve /data/model/cognitivecomputations/DeepSeek-R1-awq --trust-remote-code  --dtype float16 -q moe_wna16 --gpu-memory-utilization 0.90 --tensor-parallel-size 8 --max-model-len 32768 --block-size 64 --max-num-seqs 128  --speculative_config '{""num_speculative_tokens"": 3}'
   
   
-  # 模型优化前的明立
+  # 模型优化前的命令
   export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
   export ALLREDUCE_STREAM_WITH_COMPUTE=1
   export NCCL_MIN_NCHANNELS=16
@@ -112,8 +112,6 @@
   export VLLM_FUSED_MOE_CHUNK_SIZE=16384
   export LMSLIM_USE_LIGHTOP=0
   export W4A16_MOE_CUDA=1
-  vllm serve /data/model/cognitivecomputations/DeepSeek-R1-awq --trust-remote-code --dtype float16 --max-model-len 32768 -tp 8 -q moe_wna16 --gpu-memory-utilization 0.90 --block-size 64 
-  
   vllm serve /data/model/cognitivecomputations/DeepSeek-R1-awq --trust-remote-code --dtype float16 --max-model-len 32768 -tp 8 -q moe_wna16 --gpu-memory-utilization 0.90 --block-size 64 --port 8010
   ```
 
