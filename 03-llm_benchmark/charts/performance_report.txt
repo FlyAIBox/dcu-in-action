@@ -1,0 +1,54 @@
+============================================================
+vLLM Performance Test Report
+============================================================
+Generated: 2025-07-31 15:00:40
+Test Configurations: 4
+
+Best Performance Configurations:
+--------------------------------------------------
+Highest Throughput: 512x512_mc4 (140.5 tokens/s)
+Lowest TTFT: 512x512_mc1 (551.1 ms)
+Lowest TPOT: 512x512_mc1 (42.6 ms)
+
+Detailed Performance Data:
+--------------------------------------------------
+Config: 1024x1024_mc4
+  Total Throughput: 138.5 tokens/s
+  Generation Throughput: 69.3 tokens/s
+  Request Throughput: 0.068 req/s
+  TTFT: 2142.5 ms
+  TPOT: 55.7 ms
+  ITL: 55.7 ms
+  Input Tokens: 40920
+  Output Tokens: 40960
+
+Config: 512x512_mc1
+  Total Throughput: 45.8 tokens/s
+  Generation Throughput: 22.9 tokens/s
+  Request Throughput: 0.045 req/s
+  TTFT: 551.1 ms
+  TPOT: 42.6 ms
+  ITL: 42.6 ms
+  Input Tokens: 5110
+  Output Tokens: 5120
+
+Config: 1024x1024_mc1
+  Total Throughput: 46.1 tokens/s
+  Generation Throughput: 23.0 tokens/s
+  Request Throughput: 0.022 req/s
+  TTFT: 792.1 ms
+  TPOT: 42.7 ms
+  ITL: 42.7 ms
+  Input Tokens: 10230
+  Output Tokens: 10240
+
+Config: 512x512_mc4
+  Total Throughput: 140.5 tokens/s
+  Generation Throughput: 70.3 tokens/s
+  Request Throughput: 0.137 req/s
+  TTFT: 1184.1 ms
+  TPOT: 54.7 ms
+  ITL: 54.7 ms
+  Input Tokens: 20440
+  Output Tokens: 20480
+
