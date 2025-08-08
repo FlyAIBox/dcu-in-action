@@ -53,14 +53,12 @@
 
 ```bash
 # 克隆项目
-git clone <repository-url>
+git clone -b finetuning0808  https://github.com/FlyAIBox/dcu-in-action.git
 cd dcu-in-action
 
 # 安装依赖
 pip install -r requirements-dtk2504.txt
 
-# 验证环境
-python scripts/check_environment.py
 ```
 
 ### 2. 数据准备
