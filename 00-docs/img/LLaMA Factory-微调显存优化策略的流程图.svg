@@ -1,0 +1,181 @@
+<svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 定义渐变和样式 -->
+    <linearGradient id="headerGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#4F46E5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7C3AED;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="processGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#059669;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0D9488;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="optimizeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#DC2626;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#EA580C;stop-opacity:1" />
+    </linearGradient>
+    
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+    
+    <style>
+      .title-text { font-family: "Times New Roman", serif; font-weight: bold; }
+      .chinese-text { font-family: "SimSun", serif; }
+      .formula-text { font-family: "Times New Roman", serif; font-style: italic; }
+      .english-text { font-family: "Times New Roman", serif; }
+    </style>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="1200" height="800" fill="#F8FAFC"/>
+  
+  <!-- 标题 -->
+  <rect x="50" y="20" width="1100" height="60" rx="10" fill="url(#headerGradient)" filter="url(#shadow)"/>
+  <text x="600" y="55" text-anchor="middle" class="title-text chinese-text" font-size="28" fill="white">显存优化策略流程图</text>
+  
+  <!-- 第一阶段：显存评估 -->
+  <g id="stage1">
+    <!-- 标题框 -->
+    <rect x="50" y="100" width="350" height="40" rx="5" fill="#EF4444" opacity="0.1"/>
+    <text x="225" y="125" text-anchor="middle" class="title-text chinese-text" font-size="16" fill="#DC2626">阶段1：显存需求评估</text>
+    
+    <!-- 公式框 -->
+    <rect x="50" y="150" width="350" height="80" rx="8" fill="white" stroke="#E5E7EB" stroke-width="2" filter="url(#shadow)"/>
+    <text x="225" y="175" text-anchor="middle" class="chinese-text" font-size="14" fill="#374151">核心公式：</text>
+    <text x="225" y="200" text-anchor="middle" class="formula-text" font-size="16" fill="#1F2937">Memory ∝ L² × B × P</text>
+    <text x="80" y="220" class="english-text" font-size="12" fill="#6B7280">L: cutoff_len, B: batch_size, P: model_params</text>
+    
+    <!-- 决策点 -->
+    <polygon points="225,250 275,280 225,310 175,280" fill="#FEF3C7" stroke="#F59E0B" stroke-width="2"/>
+    <text x="225" y="285" text-anchor="middle" class="chinese-text" font-size="12" fill="#92400E">显存够用？</text>
+  </g>
+  
+  <!-- 第二阶段：基础优化 -->
+  <g id="stage2">
+    <rect x="450" y="100" width="300" height="40" rx="5" fill="#10B981" opacity="0.1"/>
+    <text x="600" y="125" text-anchor="middle" class="title-text chinese-text" font-size="16" fill="#059669">阶段2：基础参数优化</text>
+    
+    <!-- 优化项目 -->
+    <rect x="450" y="150" width="300" height="160" rx="8" fill="white" stroke="#E5E7EB" stroke-width="2" filter="url(#shadow)"/>
+    <text x="600" y="175" text-anchor="middle" class="title-text chinese-text" font-size="14" fill="#374151">三大优化策略</text>
+    
+    <text x="470" y="200" class="chinese-text" font-size="12" fill="#1F2937">1. 序列长度优化</text>
+    <text x="480" y="215" class="english-text" font-size="11" fill="#6B7280">cutoff_len: 4096 → 2048 → 1024</text>
+    
+    <text x="470" y="235" class="chinese-text" font-size="12" fill="#1F2937">2. 批量大小调整</text>
+    <text x="480" y="250" class="english-text" font-size="11" fill="#6B7280">batch_size=1, grad_accum_steps=8</text>
+    
+    <text x="470" y="270" class="chinese-text" font-size="12" fill="#1F2937">3. LoRA 参数配置</text>
+    <text x="480" y="285" class="english-text" font-size="11" fill="#6B7280">rank=16, alpha=32, target=all</text>
+    <text x="480" y="300" class="formula-text" font-size="10" fill="#6B7280">ΔW = α × B × A / r</text>
+  </g>
+  
+  <!-- 第三阶段：高级优化 -->
+  <g id="stage3">
+    <rect x="800" y="100" width="350" height="40" rx="5" fill="#8B5CF6" opacity="0.1"/>
+    <text x="975" y="125" text-anchor="middle" class="title-text chinese-text" font-size="16" fill="#7C3AED">阶段3：高级加速优化</text>
+    
+    <rect x="800" y="150" width="350" height="160" rx="8" fill="white" stroke="#E5E7EB" stroke-width="2" filter="url(#shadow)"/>
+    <text x="975" y="175" text-anchor="middle" class="title-text chinese-text" font-size="14" fill="#374151">三大加速神器</text>
+    
+    <text x="820" y="200" class="english-text" font-size="12" fill="#1F2937">1. Mixed Precision (bf16)</text>
+    <text x="830" y="215" class="chinese-text" font-size="11" fill="#6B7280">显存减半，速度提升30%</text>
+    
+    <text x="820" y="235" class="english-text" font-size="12" fill="#1F2937">2. FlashAttention-2 (fa2)</text>
+    <text x="830" y="250" class="chinese-text" font-size="11" fill="#6B7280">显存节省50-80%，速度提升150-300%</text>
+    
+    <text x="820" y="270" class="english-text" font-size="12" fill="#1F2937">3. Liger Kernel</text>
+    <text x="830" y="285" class="chinese-text" font-size="11" fill="#6B7280">显存节省20-40%，速度提升10-30%</text>
+    
+    <text x="975" y="300" text-anchor="middle" class="title-text chinese-text" font-size="11" fill="#7C3AED">总体效果：显存节省60%，速度提升200%</text>
+  </g>
+  
+  <!-- 监控和验证 -->
+  <g id="monitoring">
+    <rect x="50" y="350" width="1100" height="40" rx="5" fill="#F59E0B" opacity="0.1"/>
+    <text x="600" y="375" text-anchor="middle" class="title-text chinese-text" font-size="16" fill="#D97706">持续监控与验证</text>
+    
+    <rect x="50" y="400" width="350" height="120" rx="8" fill="white" stroke="#E5E7EB" stroke-width="2" filter="url(#shadow)"/>
+    <text x="225" y="425" text-anchor="middle" class="title-text chinese-text" font-size="14" fill="#374151">显存监控</text>
+    <text x="70" y="445" class="chinese-text" font-size="12" fill="#1F2937">• 显存使用率 &lt; 90%</text>
+    <text x="70" y="465" class="chinese-text" font-size="12" fill="#1F2937">• 峰值显存监控</text>
+    <text x="70" y="485" class="english-text" font-size="12" fill="#1F2937">• nvidia-smi 实时监控</text>
+    <text x="70" y="505" class="chinese-text" font-size="12" fill="#1F2937">• 梯度累积检查点</text>
+    
+    <rect x="425" y="400" width="350" height="120" rx="8" fill="white" stroke="#E5E7EB" stroke-width="2" filter="url(#shadow)"/>
+    <text x="600" y="425" text-anchor="middle" class="title-text chinese-text" font-size="14" fill="#374151">性能验证</text>
+    <text x="445" y="445" class="english-text" font-size="12" fill="#1F2937">• Loss 曲线监控</text>
+    <text x="445" y="465" class="chinese-text" font-size="12" fill="#1F2937">• 训练速度测试</text>
+    <text x="445" y="485" class="chinese-text" font-size="12" fill="#1F2937">• 收敛性验证</text>
+    <text x="445" y="505" class="chinese-text" font-size="12" fill="#1F2937">• 模型质量评估</text>
+    
+    <rect x="800" y="400" width="350" height="120" rx="8" fill="white" stroke="#E5E7EB" stroke-width="2" filter="url(#shadow)"/>
+    <text x="975" y="425" text-anchor="middle" class="title-text chinese-text" font-size="14" fill="#374151">问题诊断</text>
+    <text x="820" y="445" class="english-text" font-size="12" fill="#1F2937">• OOM Error → 减小参数</text>
+    <text x="820" y="465" class="chinese-text" font-size="12" fill="#1F2937">• 训练慢 → 开启加速</text>
+    <text x="820" y="485" class="chinese-text" font-size="12" fill="#1F2937">• 不收敛 → 调整学习率</text>
+    <text x="820" y="505" class="chinese-text" font-size="12" fill="#1F2937">• 过拟合 → 增加正则化</text>
+  </g>
+  
+  <!-- 最终配置模板 -->
+  <g id="final_config">
+    <rect x="50" y="550" width="1100" height="40" rx="5" fill="#059669" opacity="0.1"/>
+    <text x="600" y="575" text-anchor="middle" class="title-text chinese-text" font-size="16" fill="#059669">最终配置模板</text>
+    
+    <!-- 入门配置 -->
+    <rect x="50" y="600" width="350" height="180" rx="8" fill="white" stroke="#E5E7EB" stroke-width="2" filter="url(#shadow)"/>
+    <text x="225" y="625" text-anchor="middle" class="title-text chinese-text" font-size="14" fill="#374151">入门配置 (24GB显存)</text>
+    <text x="70" y="645" class="english-text" font-size="11" fill="#1F2937">cutoff_len: 2048</text>
+    <text x="70" y="660" class="english-text" font-size="11" fill="#1F2937">batch_size: 1, grad_accum: 8</text>
+    <text x="70" y="675" class="english-text" font-size="11" fill="#1F2937">lora_rank: 16, lora_alpha: 32</text>
+    <text x="70" y="690" class="english-text" font-size="11" fill="#1F2937">learning_rate: 5e-05</text>
+    <text x="70" y="705" class="english-text" font-size="11" fill="#1F2937">bf16: true, flash_attn: fa2</text>
+    <text x="70" y="720" class="english-text" font-size="11" fill="#1F2937">enable_liger_kernel: true</text>
+    <text x="70" y="735" class="chinese-text" font-size="11" fill="#059669">适合：对话、翻译等基础任务</text>
+    <text x="70" y="755" class="formula-text" font-size="10" fill="#6B7280">Memory ≈ 18GB</text>
+    
+    <!-- 高配版本 -->
+    <rect x="425" y="600" width="350" height="180" rx="8" fill="white" stroke="#E5E7EB" stroke-width="2" filter="url(#shadow)"/>
+    <text x="600" y="625" text-anchor="middle" class="title-text chinese-text" font-size="14" fill="#374151">高配版本 (48GB+显存)</text>
+    <text x="445" y="645" class="english-text" font-size="11" fill="#1F2937">cutoff_len: 4096</text>
+    <text x="445" y="660" class="english-text" font-size="11" fill="#1F2937">batch_size: 2, grad_accum: 4</text>
+    <text x="445" y="675" class="english-text" font-size="11" fill="#1F2937">lora_rank: 32, lora_alpha: 64</text>
+    <text x="445" y="690" class="english-text" font-size="11" fill="#1F2937">learning_rate: 3e-05</text>
+    <text x="445" y="705" class="english-text" font-size="11" fill="#1F2937">bf16: true, flash_attn: fa2</text>
+    <text x="445" y="720" class="english-text" font-size="11" fill="#1F2937">enable_liger_kernel: true</text>
+    <text x="445" y="735" class="chinese-text" font-size="11" fill="#059669">适合：代码、推理等复杂任务</text>
+    <text x="445" y="755" class="formula-text" font-size="10" fill="#6B7280">Memory ≈ 42GB</text>
+    
+    <!-- 调优策略 -->
+    <rect x="800" y="600" width="350" height="180" rx="8" fill="white" stroke="#E5E7EB" stroke-width="2" filter="url(#shadow)"/>
+    <text x="975" y="625" text-anchor="middle" class="title-text chinese-text" font-size="14" fill="#374151">调优方法论</text>
+    <text x="820" y="645" class="title-text chinese-text" font-size="12" fill="#1F2937">1. 最小可行配置</text>
+    <text x="830" y="660" class="chinese-text" font-size="11" fill="#6B7280">保守参数，确保能运行</text>
+    <text x="820" y="680" class="title-text chinese-text" font-size="12" fill="#1F2937">2. 数据适配</text>
+    <text x="830" y="695" class="chinese-text" font-size="11" fill="#6B7280">根据数据长度调整cutoff_len</text>
+    <text x="820" y="715" class="title-text chinese-text" font-size="12" fill="#1F2937">3. 性能优化</text>
+    <text x="830" y="730" class="chinese-text" font-size="11" fill="#6B7280">逐步增加rank和batch_size</text>
+    <text x="820" y="750" class="title-text chinese-text" font-size="12" fill="#1F2937">4. 超参数精调</text>
+    <text x="830" y="765" class="chinese-text" font-size="11" fill="#6B7280">基于Loss曲线调整学习率</text>
+  </g>
+  
+  <!-- 连接线和箭头 -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6B7280"/>
+    </marker>
+  </defs>
+  
+  <!-- 主流程箭头 -->
+  <line x1="275" y1="280" x2="450" y2="220" stroke="#6B7280" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="750" y1="220" x2="800" y2="220" stroke="#6B7280" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="600" y1="310" x2="600" y2="350" stroke="#6B7280" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="600" y1="520" x2="600" y2="550" stroke="#6B7280" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- 反馈循环箭头 -->
+  <path d="M 225 330 Q 150 370 100 280 Q 100 200 175 250" stroke="#F59E0B" stroke-width="2" fill="none" marker-end="url(#arrowhead)" stroke-dasharray="5,5"/>
+  <text x="100" y="320" class="chinese-text" font-size="10" fill="#D97706">显存不足</text>
+  <text x="100" y="335" class="chinese-text" font-size="10" fill="#D97706">重新优化</text>
+</svg>

@@ -39,7 +39,8 @@ https://download.sourcefind.cn:65024/file/4/transformer_engine/DAS1.5/transforme
 # 高性能推理引擎 - 使用已验证兼容的版本
 # vllm==0.6.2+das.opt3.dtk2504
 https://download.sourcefind.cn:65024/file/4/vllm/DAS1.5/vllm-0.6.2+das.opt3.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl
-
+# 结构化输出依赖（避免旧版outlines引入pyairports冲突）
+outlines>=0.0.43
 # ==================== 大模型训练与微调 ====================
 # 参数高效微调
 peft==0.15.1
