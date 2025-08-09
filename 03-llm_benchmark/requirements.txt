@@ -23,6 +23,10 @@
 # vllm==0.6.2+das.opt3.dtk2504
 https://download.sourcefind.cn:65024/file/4/vllm/DAS1.5/vllm-0.6.2+das.opt3.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl
 
+# vllm==0.8.5.post1+das.opt1.dtk25041
+# https://download.sourcefind.cn:65024/file/4/vllm/DAS1.6/vllm-0.8.5.post1+das.opt1.dtk25041-cp310-cp310-manylinux_2_28_x86_64.whl
+
+
 
 # HuggingFace变换器库 - 提供分词器和模型工具
 transformers==4.45.0
