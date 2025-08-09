@@ -67,6 +67,9 @@ pyyaml==6.0.2
 python-dotenv==1.1.0
 omegaconf==2.3.0
 
+# 魔搭社区
+modelscope==1.28.2
+
 # 数据验证
 pydantic==2.10.6
 
