@@ -1,0 +1,187 @@
+<svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title-text { font-family: '宋体', SimSun, serif; font-size: 24px; font-weight: bold; fill: #2c3e50; }
+      .heading-text { font-family: '宋体', SimSun, serif; font-size: 16px; font-weight: bold; fill: #34495e; }
+      .content-text { font-family: '宋体', SimSun, serif; font-size: 12px; fill: #2c3e50; }
+      .english-text { font-family: 'Times New Roman', serif; font-size: 11px; fill: #2c3e50; }
+      .formula-text { font-family: 'Times New Roman', serif; font-size: 10px; fill: #8e44ad; font-style: italic; }
+      .main-box { fill: #ecf0f1; stroke: #34495e; stroke-width: 2; rx: 8; }
+      .sub-box { fill: #ffffff; stroke: #3498db; stroke-width: 1.5; rx: 5; }
+      .process-box { fill: #e8f4fd; stroke: #2980b9; stroke-width: 1.5; rx: 5; }
+      .problem-box { fill: #fdf2e9; stroke: #e67e22; stroke-width: 1.5; rx: 5; }
+      .solution-box { fill: #eafaf1; stroke: #27ae60; stroke-width: 1.5; rx: 5; }
+      .arrow { stroke: #34495e; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .connection { stroke: #7f8c8d; stroke-width: 1; fill: none; stroke-dasharray: 3,3; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#34495e"/>
+    </marker>
+  </defs>
+
+  <!-- 标题 -->
+  <text x="600" y="30" class="title-text" text-anchor="middle">微调数据集构建方式结构图</text>
+
+  <!-- 第一层：构建方式分类 -->
+  <rect x="50" y="60" width="500" height="140" class="main-box"/>
+  <text x="300" y="85" class="heading-text" text-anchor="middle">方式一：获取公开数据集</text>
+  
+  <rect x="650" y="60" width="500" height="140" class="main-box"/>
+  <text x="900" y="85" class="heading-text" text-anchor="middle">方式二：基于特定领域文献合成数据集</text>
+
+  <!-- 公开数据集平台 -->
+  <g id="public-platforms">
+    <!-- HuggingFace -->
+    <rect x="70" y="100" width="140" height="90" class="sub-box"/>
+    <text x="140" y="120" class="content-text" text-anchor="middle">HuggingFace</text>
+    <text x="140" y="135" class="english-text" text-anchor="middle">NLP/多模态</text>
+    <text x="140" y="150" class="content-text" text-anchor="middle">即装即用</text>
+    <text x="140" y="165" class="formula-text" text-anchor="middle">load_dataset()</text>
+    <text x="140" y="180" class="english-text" text-anchor="middle">datasets库</text>
+
+    <!-- Kaggle -->
+    <rect x="220" y="100" width="120" height="90" class="sub-box"/>
+    <text x="280" y="120" class="content-text" text-anchor="middle">Kaggle</text>
+    <text x="280" y="135" class="english-text" text-anchor="middle">通用型</text>
+    <text x="280" y="150" class="content-text" text-anchor="middle">竞赛生态</text>
+    <text x="280" y="165" class="formula-text" text-anchor="middle">kaggle datasets</text>
+    <text x="280" y="180" class="english-text" text-anchor="middle">download</text>
+
+    <!-- 其他平台 -->
+    <rect x="350" y="100" width="180" height="90" class="sub-box"/>
+    <text x="440" y="115" class="content-text" text-anchor="middle">其他平台</text>
+    <text x="375" y="130" class="english-text">• Google Dataset Search</text>
+    <text x="375" y="145" class="english-text">• openDataLab</text>
+    <text x="375" y="160" class="english-text">• ModelScope</text>
+    <text x="375" y="175" class="english-text">• awesome-public-datasets</text>
+  </g>
+
+  <!-- 传统AI构造方法及问题 -->
+  <g id="traditional-problems">
+    <rect x="670" y="100" width="200" height="90" class="problem-box"/>
+    <text x="770" y="115" class="heading-text" text-anchor="middle">传统AI构造存在问题</text>
+    <text x="680" y="130" class="content-text">• 回复长度限制，结果截断</text>
+    <text x="680" y="145" class="content-text">• 问题答案过于简单</text>
+    <text x="680" y="160" class="content-text">• 重复问题生成</text>
+    <text x="680" y="175" class="content-text">• RAG幻觉问题</text>
+
+    <!-- Easy DataSet 解决方案 -->
+    <rect x="890" y="100" width="240" height="90" class="solution-box"/>
+    <text x="1010" y="115" class="heading-text" text-anchor="middle">Easy DataSet 解决方案</text>
+    <text x="900" y="130" class="content-text">• AI辅助生成，保持准确性</text>
+    <text x="900" y="145" class="content-text">• 解决上下文截断问题</text>
+    <text x="900" y="160" class="content-text">• 批量构造，生成COT</text>
+    <text x="900" y="175" class="content-text">• 领域标签，格式转换</text>
+  </g>
+
+  <!-- 数据集构建流程 -->
+  <g id="construction-process">
+    <rect x="100" y="230" width="1000" height="180" class="main-box"/>
+    <text x="600" y="255" class="heading-text" text-anchor="middle">数据集构建核心流程</text>
+
+    <!-- 流程步骤 -->
+    <rect x="130" y="270" width="150" height="70" class="process-box"/>
+    <text x="205" y="290" class="content-text" text-anchor="middle">数据源获取</text>
+    <text x="205" y="305" class="english-text" text-anchor="middle">Data Source</text>
+    <text x="205" y="320" class="formula-text" text-anchor="middle">D = {d₁, d₂, ..., dₙ}</text>
+
+    <rect x="320" y="270" width="150" height="70" class="process-box"/>
+    <text x="395" y="290" class="content-text" text-anchor="middle">文本块切分</text>
+    <text x="395" y="305" class="english-text" text-anchor="middle">Text Chunking</text>
+    <text x="395" y="320" class="formula-text" text-anchor="middle">T = chunk(D, size)</text>
+
+    <rect x="510" y="270" width="150" height="70" class="process-box"/>
+    <text x="585" y="290" class="content-text" text-anchor="middle">QA对生成</text>
+    <text x="585" y="305" class="english-text" text-anchor="middle">QA Generation</text>
+    <text x="585" y="320" class="formula-text" text-anchor="middle">QA = AI(T, prompt)</text>
+
+    <rect x="700" y="270" width="150" height="70" class="process-box"/>
+    <text x="775" y="290" class="content-text" text-anchor="middle">质量校验</text>
+    <text x="775" y="305" class="english-text" text-anchor="middle">Quality Control</text>
+    <text x="775" y="320" class="formula-text" text-anchor="middle">Q = validate(QA)</text>
+
+    <rect x="890" y="270" width="150" height="70" class="process-box"/>
+    <text x="965" y="290" class="content-text" text-anchor="middle">格式转换</text>
+    <text x="965" y="305" class="english-text" text-anchor="middle">Format Convert</text>
+    <text x="965" y="320" class="formula-text" text-anchor="middle">F = convert(Q)</text>
+
+    <!-- 流程箭头 -->
+    <path d="M 280 305 L 310 305" class="arrow"/>
+    <path d="M 470 305 L 500 305" class="arrow"/>
+    <path d="M 660 305 L 690 305" class="arrow"/>
+    <path d="M 850 305 L 880 305" class="arrow"/>
+  </g>
+
+  <!-- 关键技术要点 -->
+  <g id="key-technologies">
+    <rect x="100" y="440" width="480" height="140" class="main-box"/>
+    <text x="340" y="465" class="heading-text" text-anchor="middle">关键技术要点</text>
+
+    <rect x="120" y="480" width="200" height="90" class="sub-box"/>
+    <text x="220" y="500" class="content-text" text-anchor="middle">上下文处理</text>
+    <text x="130" y="515" class="english-text">• 长文档分块策略</text>
+    <text x="130" y="530" class="english-text">• 重叠窗口机制</text>
+    <text x="130" y="545" class="formula-text">overlap = size × 0.1</text>
+    <text x="130" y="560" class="english-text">• 上下文保持算法</text>
+
+    <rect x="340" y="480" width="220" height="90" class="sub-box"/>
+    <text x="450" y="500" class="content-text" text-anchor="middle">去重与质量控制</text>
+    <text x="350" y="515" class="english-text">• 语义相似度计算</text>
+    <text x="350" y="530" class="formula-text">sim = cosine(emb₁, emb₂)</text>
+    <text x="350" y="545" class="english-text">• 自动质量评估</text>
+    <text x="350" y="560" class="english-text">• 人工标注接口</text>
+
+    <!-- 数据协议注意事项 -->
+    <rect x="620" y="440" width="480" height="140" class="main-box"/>
+    <text x="860" y="465" class="heading-text" text-anchor="middle">数据使用协议注意事项</text>
+
+    <rect x="640" y="480" width="200" height="90" class="problem-box"/>
+    <text x="740" y="500" class="content-text" text-anchor="middle">协议类型</text>
+    <text x="650" y="515" class="english-text">• CC-BY: 署名许可</text>
+    <text x="650" y="530" class="english-text">• CC-BY-NC: 非商用</text>
+    <text x="650" y="545" class="english-text">• MIT: 宽松许可</text>
+    <text x="650" y="560" class="english-text">• GPL: 开源许可</text>
+
+    <rect x="860" y="480" width="220" height="90" class="solution-box"/>
+    <text x="970" y="500" class="content-text" text-anchor="middle">使用建议</text>
+    <text x="870" y="515" class="english-text">• 仔细阅读许可协议</text>
+    <text x="870" y="530" class="english-text">• 商用场景避免NC协议</text>
+    <text x="870" y="545" class="english-text">• 保留原始署名信息</text>
+    <text x="870" y="560" class="english-text">• 咨询法务意见</text>
+  </g>
+
+  <!-- 输出格式 -->
+  <g id="output-formats">
+    <rect x="200" y="610" width="800" height="120" class="main-box"/>
+    <text x="600" y="635" class="heading-text" text-anchor="middle">常见数据集格式转换</text>
+
+    <rect x="220" y="650" width="180" height="70" class="sub-box"/>
+    <text x="310" y="670" class="content-text" text-anchor="middle">Alpaca格式</text>
+    <text x="230" y="685" class="formula-text">{"instruction": str,</text>
+    <text x="230" y="700" class="formula-text"> "input": str, "output": str}</text>
+
+    <rect x="420" y="650" width="180" height="70" class="sub-box"/>
+    <text x="510" y="670" class="content-text" text-anchor="middle">ShareGPT格式</text>
+    <text x="430" y="685" class="formula-text">{"conversations": [</text>
+    <text x="430" y="700" class="formula-text"> {"from": role, "value": str}]}</text>
+
+    <rect x="620" y="650" width="180" height="70" class="sub-box"/>
+    <text x="710" y="670" class="content-text" text-anchor="middle">COT推理格式</text>
+    <text x="630" y="685" class="formula-text">{"question": str,</text>
+    <text x="630" y="700" class="formula-text"> "chain_of_thought": str}</text>
+
+    <rect x="820" y="650" width="160" height="70" class="sub-box"/>
+    <text x="900" y="670" class="content-text" text-anchor="middle">领域标签</text>
+    <text x="830" y="685" class="formula-text">{"domain": str,</text>
+    <text x="830" y="700" class="formula-text"> "category": list}</text>
+  </g>
+
+  <!-- 连接线 -->
+  <path d="M 770 190 L 770 220 L 600 220 L 600 230" class="connection"/>
+  <path d="M 340 200 L 340 220 L 600 220" class="connection"/>
+  <path d="M 600 410 L 600 440" class="connection"/>
+  <path d="M 600 580 L 600 610" class="connection"/>
+
+  <!-- 效果公式 -->
+  <text x="600" y="790" class="formula-text" text-anchor="middle">数据集质量 = f(数据源质量, 处理算法, 去重机制, 人工校验)</text>
+</svg>

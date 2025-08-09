@@ -36,7 +36,7 @@ https://download.sourcefind.cn:65024/file/4/transformer_engine/DAS1.5/transforme
 # bitsandbytes==0.42.0+das.opt1.dtk24043
 # https://download.sourcefind.cn:65024/directlink/4/bitsandbytes/DAS1.3/bitsandbytes-0.42.0+das.opt1.dtk24043-py3-none-any.whl
 
-# 高性能推理引擎
+# 高性能推理引擎 - 使用已验证兼容的版本
 # vllm==0.6.2+das.opt3.dtk2504
 https://download.sourcefind.cn:65024/file/4/vllm/DAS1.5/vllm-0.6.2+das.opt3.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl
 
@@ -50,7 +50,8 @@ safetensors==0.5.3
 sentencepiece==0.2.0
 
 # ==================== 科学计算基础 ====================
-numpy==1.26.4
+# 使用vLLM兼容的numpy版本，解决依赖冲突
+numpy==1.25.0
 scipy==1.15.3
 pandas==2.2.3
 scikit-learn==1.6.1

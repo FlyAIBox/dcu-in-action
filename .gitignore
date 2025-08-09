@@ -190,8 +190,8 @@ results/
 data/
 datasets/
 *.csv
-*.json
-*.jsonl
+# *.json
+# *.jsonl
 *.parquet
 *.feather
 *.arrow
