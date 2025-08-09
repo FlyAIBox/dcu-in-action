@@ -33,14 +33,6 @@ https://download.sourcefind.cn:65024/file/4/triton/DAS1.5/triton-3.0.0+das.opt4.
 # transformer_engine==1.9.0+das.opt2.dtk2504
 https://download.sourcefind.cn:65024/file/4/transformer_engine/DAS1.5/transformer_engine-1.9.0+das.opt2.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl
 
-# bitsandbytes==0.42.0+das.opt1.dtk24043
-# https://download.sourcefind.cn:65024/directlink/4/bitsandbytes/DAS1.3/bitsandbytes-0.42.0+das.opt1.dtk24043-py3-none-any.whl
-
-# 高性能推理引擎 - 使用已验证兼容的版本
-# vllm==0.6.2+das.opt3.dtk2504
-https://download.sourcefind.cn:65024/file/4/vllm/DAS1.5/vllm-0.6.2+das.opt3.dtk2504-cp310-cp310-manylinux_2_28_x86_64.whl
-# 结构化输出依赖（避免旧版outlines引入pyairports冲突）
-outlines>=0.0.43
 # ==================== 大模型训练与微调 ====================
 # 参数高效微调
 peft==0.15.1
@@ -95,26 +87,3 @@ pytest-asyncio==0.26.0
 
 # 代码格式化
 ruff==0.11.11
-
-# ==================== 可选依赖 ====================
-# 数据处理（可选）
-# pillow>=11.0.0
-# librosa>=0.11.0
-# jieba>=0.42.0
-
-# 数据库（可选）
-# redis>=6.0.0
-# sqlalchemy>=2.0.0
-
-# 可视化（可选）
-# matplotlib>=3.10.0
-# tensorboard>=2.18.0
-
-# 音频处理（可选）
-# soundfile>=0.13.0
-# av>=14.0.0
-
-# 其他工具（可选）
-# fire>=0.7.0
-# click>=8.1.0
-# typer>=0.15.0
