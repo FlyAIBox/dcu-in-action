@@ -1,0 +1,25 @@
+{
+  "[Easy Dataset] [H_LPE1u7tKkP] Alpaca": {
+    "file_name": "alpaca.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "system": "system"
+    }
+  },
+  "[Easy Dataset] [H_LPE1u7tKkP] ShareGPT": {
+    "file_name": "sharegpt.json",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant",
+      "system_tag": "system"
+    }
+  }
+}
