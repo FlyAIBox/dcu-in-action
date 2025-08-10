@@ -20,7 +20,7 @@ train.compute_type: bf16
 train.create_new_adapter: false
 train.cutoff_len: 2048
 train.dataset:
-- glaive_toolcall_100k
+- medical_sft
 train.dataset_dir: data
 train.ds_offload: false
 train.ds_stage: '3'
@@ -43,7 +43,7 @@ train.loraplus_lr_ratio: 0
 train.lr_scheduler_type: cosine
 train.mask_history: false
 train.max_grad_norm: '1.0'
-train.max_samples: '10000'
+train.max_samples: '1000'
 train.neat_packing: false
 train.neftune_alpha: 0
 train.num_train_epochs: '2.0'
@@ -59,10 +59,10 @@ train.resize_vocab: false
 train.reward_model: []
 train.save_steps: 100
 train.swanlab_api_key: ''
-train.swanlab_link: ''
+train.swanlab_link: "### SwanLab \u94FE\u63A5\nhttps://swanlab.cn/@flyaibox/llamafactory/runs/aief7kkyj5dwnamu43k5s"
 train.swanlab_mode: cloud
 train.swanlab_project: llamafactory
-train.swanlab_run_name: ds32b-20250625
+train.swanlab_run_name: ds32b-20250809
 train.swanlab_workspace: ''
 train.train_on_prompt: false
 train.training_stage: Supervised Fine-Tuning
@@ -73,6 +73,6 @@ train.use_galore: false
 train.use_llama_pro: false
 train.use_pissa: false
 train.use_rslora: false
-train.use_swanlab: false
+train.use_swanlab: true
 train.val_size: 0.1
 train.warmup_steps: 0
