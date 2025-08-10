@@ -73,12 +73,6 @@ vllm_benchmark_serving/
 ```Bash
 # 安装依赖
 pip install -r requirements.txt
-
-# 启动vLLM服务
-vllm serve /data/model/cognitivecomputations/DeepSeek-R1-awq \
-    --host 0.0.0.0 \
-    --port 8010 \
-    --swap-space 16
 ```
 
 #### 步骤2：配置测试参数
@@ -103,6 +97,53 @@ concurrency_prompts:
 
 #### 步骤3：一键执行压测与分析
 
+```bash
+# python main.py
+usage: main.py [-h] {batch,single,aggregate,visualize} ...
+
+vLLM推理服务压测工具 - 集成批量压测、单次压测和结果聚合功能
+
+positional arguments:
+  {batch,single,aggregate,visualize}
+                        可用命令
+    batch               批量压测（根据config.yaml配置）
+    single              单次压测
+    aggregate           聚合压测结果
+    visualize           生成可视化报告
+
+options:
+  -h, --help            show this help message and exit
+
+        使用示例:
+        # 批量压测（根据config.yaml配置）
+        python main.py batch
+        python main.py batch --config custom_config.yaml
+
+        # 单次压测
+        python main.py single --model deepseek-ai/DeepSeek-R1 --base-url http://localhost:8010 --num-prompts 100
+        python main.py single --model /path/to/model --base-url http://localhost:8010 --max-concurrency 16 --random-input-len 512 --random-output-len 512
+
+        # 聚合结果
+        python main.py aggregate                                    # 聚合最新的结果目录
+        python main.py aggregate --list                            # 列出所有可用的结果目录
+        python main.py aggregate --dir DeepSeek-R1_20250728_145302 # 聚合指定的结果目录
+
+        # 生成可视化报告
+        python main.py visualize                                    # 自动查找最新CSV文件，生成完整版报告
+        python main.py visualize --csv results/aggregate_results_20250728.csv  # 指定CSV文件
+        python main.py visualize --mode simple --output simple_charts          # 生成简化版报告
+        python main.py visualize --mode both --output all_charts               # 生成两种模式的报告
+
+        功能说明:
+        batch     - 根据config.yaml配置文件执行批量压测，结果按模型名称和时间组织到子目录
+        single    - 执行单次压测，结果按模型名称和时间组织到子目录
+        aggregate - 聚合指定目录下的JSON结果文件，生成双语CSV报告
+                   支持 --list 查看可用目录，--dir 指定目录（默认使用最新的）
+        visualize - 生成可视化性能报告，支持simple(基础图表)、advanced(完整报告)、both(两种模式)
+                   支持自动查找最新CSV文件，或手动指定CSV文件路径
+
+```
+
 执行以下命令，即可完成批量压测、结果聚合和可视化报告生成。
 
 ```Bash
@@ -124,8 +165,8 @@ python main.py visualize
 
 | 指标名称                    | 英文缩写/原始名称                       | 解释                                                         | 实际意义                                                     |
 | --------------------------- | --------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| **端到端时间**              | `E2E_TIME` / `benchmark duration`       | 整个基准测试运行的总时间，从开始到结束。                     | 衡量完成所有请求和生成所有输出所需的总时长，时间越短表示整体执行效率越高。 |
 | **请求吞吐量**              | `REQ_THROUGHPUT` / `Request throughput` | 单位时间内系统处理的请求数量（通常是每秒请求数）。           | 反映模型服务处理并发请求的能力，数值越高表示服务器能处理更多用户请求。 |
+| **端到端时间**              | `E2E_TIME` / `benchmark duration`       | 整个基准测试运行的总时间，从开始到结束。                     | 衡量完成所有请求和生成所有输出所需的总时长，时间越短表示整体执行效率越高。 |
 | **生成吞吐量**              | `GEN_THROUGHPUT` / `Output throughput`  | 单位时间内模型生成的 token 数量（通常是每秒 token 数），也称**解码吞吐量**或**生成速度**。 | 衡量模型实际生成文本的速度，数值越高意味着用户可以更快地获得完整的响应。 |
 | **总吞吐量**                | `TOTAL_THROUGHPUT` / `Total Token`      | 每秒处理的总 token 数量，包括输入 prompt tokens 和生成的 completion tokens。 | 衡量模型整体处理能力的重要指标，综合反映了输入处理和输出生成的效率。 |
 | **平均首次 token 时间**     | `TTFT` / `Mean TTFT`                    | 从发送请求到接收到第一个 token 所需的平均时间（毫秒）。      | 对用户体验影响很大，决定用户看到第一个响应所需的时间，时间越短用户感觉响应越快。 |

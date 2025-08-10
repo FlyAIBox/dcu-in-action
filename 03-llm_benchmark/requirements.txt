@@ -58,5 +58,5 @@ pyyaml==6.0.2  # YAML配置文件解析
 requests==2.32.3 # HTTP请求库（备用）
 pillow==11.3.0  # 图像处理库（用于多模态数据集）
 huggingface-hub==0.34.1  # HuggingFace Hub客户端
-pyairports==2.1.1
-outlines==0.0.46
+# pyairports==2.1.1
+# outlines==0.0.46

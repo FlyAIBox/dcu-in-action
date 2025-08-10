@@ -106,7 +106,7 @@ cython_debug/
 
 # Project specific
 # config.yaml
-results/*
+# results/*
 !results/.gitkeep
 
 # Logs
